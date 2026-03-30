@@ -1,0 +1,191 @@
+/* Estilos de la página de Pagos */
+.pagos-page {
+  max-width: 800px;
+}
+
+.pagos-page h1 {
+  margin: 0 0 30px 0;
+  color: #1f2937;
+  font-size: 2rem;
+}
+
+.confirmacion-pago {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border: 2px solid #10b981;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.confirmacion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.confirmacion-header h3 {
+  margin: 0;
+  color: #065f46;
+  font-size: 1.3rem;
+}
+
+.btn-cerrar {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #065f46;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.btn-cerrar:hover {
+  background: rgba(6, 95, 70, 0.1);
+}
+
+.confirmacion-body {
+  margin-bottom: 20px;
+}
+
+.confirmacion-body p {
+  margin: 8px 0;
+  color: #065f46;
+  font-size: 1rem;
+}
+
+.confirmacion-actions {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.btn-ver-boleta {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 150px;
+}
+
+.btn-ver-boleta:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+}
+
+.btn-descargar {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 200px;
+}
+
+.btn-descargar:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+}
+
+.btn-whatsapp-send {
+  background: #25d366;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 200px;
+}
+
+.btn-whatsapp-send:hover:not(:disabled) {
+  background: #20ba5a;
+  transform: translateY(-2px);
+}
+
+.btn-whatsapp-send:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.warning-text {
+  margin-top: 10px;
+  color: #92400e;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .confirmacion-actions {
+    flex-direction: column;
+  }
+
+  .confirmacion-actions button {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .descuentos-adicionales-section,
+  .bonos-adicionales-section {
+    margin-top: 15px;
+  }
+
+  .descuento-item,
+  .bono-item {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .descuento-item input,
+  .bono-item input {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .pagos-page h1 {
+    font-size: 1.5rem;
+  }
+
+  .confirmacion-pago {
+    padding: 15px;
+  }
+
+  .confirmacion-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .form-card {
+    padding: 20px 15px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-agregar-descuento,
+  .btn-agregar-bono {
+    width: 100%;
+    margin-top: 10px;
+  }
+}

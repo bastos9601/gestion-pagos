@@ -1,0 +1,135 @@
+/* Estilos de la página de Configuración */
+.configuracion-page {
+  max-width: 900px;
+}
+
+.configuracion-page h1 {
+  margin: 0 0 20px 0;
+  color: #1f2937;
+  font-size: 2rem;
+}
+
+.config-info {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.config-info p {
+  margin: 0;
+  color: #1e40af;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.form-section {
+  margin-bottom: 30px;
+}
+
+.form-section h3 {
+  margin: 0 0 20px 0;
+  color: #374151;
+  font-size: 1.2rem;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.preview-section {
+  margin-top: 40px;
+}
+
+.preview-section h3 {
+  margin: 0 0 20px 0;
+  color: #374151;
+  font-size: 1.2rem;
+}
+
+.preview-card {
+  background: white;
+  border: 2px solid #000;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.preview-header {
+  text-align: center;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.preview-header h2 {
+  margin: 0 0 10px 0;
+  color: #000;
+  font-size: 1.5rem;
+}
+
+.preview-header p {
+  margin: 5px 0;
+  color: #000;
+  font-size: 0.9rem;
+}
+
+.preview-note {
+  margin-top: 20px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .configuracion-page {
+    max-width: 100%;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Botones de firma */
+.btn-crear-firma,
+.btn-editar-firma,
+.btn-eliminar-firma {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.btn-crear-firma {
+  background-color: #3b82f6;
+  color: white;
+  width: 100%;
+}
+
+.btn-crear-firma:hover {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-editar-firma {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.btn-editar-firma:hover {
+  background-color: #d97706;
+}
+
+.btn-eliminar-firma {
+  background-color: #ef4444;
+  color: white;
+}
+
+.btn-eliminar-firma:hover {
+  background-color: #dc2626;
+}
