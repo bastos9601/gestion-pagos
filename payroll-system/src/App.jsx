@@ -8,6 +8,7 @@ import { Dashboard } from './pages/Dashboard'
 import { Empleados } from './pages/Empleados'
 import { Pagos } from './pages/Pagos'
 import { Historial } from './pages/Historial'
+import { Asistencias } from './pages/Asistencias'
 import { Configuracion } from './pages/Configuracion'
 
 function App() {
@@ -56,6 +57,17 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <Historial />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/asistencias"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Asistencias />
                 </Layout>
               </ProtectedRoute>
             }

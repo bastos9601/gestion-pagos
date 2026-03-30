@@ -14,9 +14,12 @@ export const Dashboard = () => {
   const [showModal, setShowModal] = useState(false)
   const [modalType, setModalType] = useState('') // 'adelantos' o 'bonos'
   const [modalData, setModalData] = useState([])
+  const [alertasAsistencia, setAlertasAsistencia] = useState([])
+  const [showAlertasModal, setShowAlertasModal] = useState(false)
 
   useEffect(() => {
     fetchStats()
+    verificarAsistenciasHoy()
   }, [])
 
   const fetchStats = async () => {
@@ -62,6 +65,64 @@ export const Dashboard = () => {
       console.error('Error al cargar estadísticas:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const verificarAsistenciasHoy = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      
+      // Obtener todos los empleados
+      const { data: empleados, error: empError } = await supabase
+        .from('empleados')
+        .select('id, nombre, dni, cargo')
+        .order('nombre')
+
+      if (empError) throw empError
+
+      // Obtener asistencias de hoy
+      const { data: asistenciasHoy, error: asistError } = await supabase
+        .from('asistencias')
+        .select('empleado_id, hora_entrada, hora_salida')
+        .eq('fecha', today)
+
+      if (asistError) throw asistError
+
+      // Crear mapa de asistencias por empleado
+      const asistenciasMap = {}
+      asistenciasHoy?.forEach(a => {
+        asistenciasMap[a.empleado_id] = a
+      })
+
+      // Identificar empleados sin asistencia o sin salida
+      const alertas = []
+      empleados?.forEach(emp => {
+        const asistencia = asistenciasMap[emp.id]
+        
+        if (!asistencia) {
+          // No ha marcado entrada
+          alertas.push({
+            empleado: emp,
+            tipo: 'sin_entrada',
+            mensaje: 'No ha marcado entrada',
+            icono: '🔴',
+            color: '#ef4444'
+          })
+        } else if (!asistencia.hora_salida) {
+          // No ha marcado salida
+          alertas.push({
+            empleado: emp,
+            tipo: 'sin_salida',
+            mensaje: 'No ha marcado salida',
+            icono: '🟡',
+            color: '#f59e0b'
+          })
+        }
+      })
+
+      setAlertasAsistencia(alertas)
+    } catch (error) {
+      console.error('Error al verificar asistencias:', error)
     }
   }
 
@@ -145,6 +206,39 @@ export const Dashboard = () => {
     <div className="dashboard">
       <h1>Dashboard</h1>
       
+      {/* Alertas de Asistencia */}
+      {alertasAsistencia.length > 0 && (
+        <div className="alertas-asistencia">
+          <div className="alertas-header">
+            <h3>
+              ⚠️ Alertas de Asistencia ({alertasAsistencia.length})
+            </h3>
+            <button 
+              onClick={() => setShowAlertasModal(true)}
+              className="btn-ver-alertas"
+            >
+              Ver Detalles
+            </button>
+          </div>
+          <div className="alertas-preview">
+            {alertasAsistencia.slice(0, 3).map((alerta, index) => (
+              <div key={index} className="alerta-item" style={{ borderLeftColor: alerta.color }}>
+                <span className="alerta-icono">{alerta.icono}</span>
+                <div className="alerta-info">
+                  <strong>{alerta.empleado.nombre}</strong>
+                  <span>{alerta.mensaje}</span>
+                </div>
+              </div>
+            ))}
+            {alertasAsistencia.length > 3 && (
+              <div className="alerta-mas">
+                +{alertasAsistencia.length - 3} más
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-icon">👥</div>
@@ -218,6 +312,43 @@ export const Dashboard = () => {
                     ))}
                   </tbody>
                 </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Alertas de Asistencia */}
+      {showAlertasModal && (
+        <div className="modal-overlay" onClick={() => setShowAlertasModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>⚠️ Alertas de Asistencia - Hoy</h2>
+              <button onClick={() => setShowAlertasModal(false)} className="btn-close-modal">✕</button>
+            </div>
+            <div className="modal-body">
+              {alertasAsistencia.length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#10b981', padding: '20px' }}>
+                  ✅ Todos los empleados han marcado asistencia correctamente
+                </p>
+              ) : (
+                <div className="alertas-list">
+                  {alertasAsistencia.map((alerta, index) => (
+                    <div key={index} className="alerta-card" style={{ borderLeftColor: alerta.color }}>
+                      <div className="alerta-card-header">
+                        <span className="alerta-icono-grande">{alerta.icono}</span>
+                        <div>
+                          <h4>{alerta.empleado.nombre}</h4>
+                          <p className="alerta-cargo">{alerta.empleado.cargo}</p>
+                        </div>
+                      </div>
+                      <div className="alerta-card-body">
+                        <p className="alerta-mensaje">{alerta.mensaje}</p>
+                        <p className="alerta-dni">DNI: {alerta.empleado.dni}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>

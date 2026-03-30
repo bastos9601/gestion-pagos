@@ -99,6 +99,35 @@ export const Pagos = () => {
     }
   }
 
+  // Función para calcular días y horas desde asistencias
+  const calcularAsistenciasDelMes = async (empleadoId, fechaPago) => {
+    if (!empleadoId || !fechaPago) return { dias: 0, horas: 0 }
+
+    try {
+      const fecha = new Date(fechaPago)
+      const primerDiaMes = new Date(fecha.getFullYear(), fecha.getMonth(), 1).toISOString().split('T')[0]
+      const ultimoDiaMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).toISOString().split('T')[0]
+
+      const { data, error } = await supabase
+        .from('asistencias')
+        .select('fecha, hora_entrada, hora_salida, horas_trabajadas')
+        .eq('empleado_id', empleadoId)
+        .gte('fecha', primerDiaMes)
+        .lte('fecha', ultimoDiaMes)
+        .not('hora_salida', 'is', null) // Solo contar asistencias completas
+
+      if (error) throw error
+
+      const diasTrabajados = data?.length || 0
+      const horasTrabajadas = data?.reduce((sum, a) => sum + (parseFloat(a.horas_trabajadas) || 0), 0) || 0
+
+      return { dias: diasTrabajados, horas: horasTrabajadas.toFixed(1) }
+    } catch (error) {
+      console.error('Error al calcular asistencias:', error)
+      return { dias: 0, horas: 0 }
+    }
+  }
+
   // Función para calcular el monto según días trabajados
   const calcularMonto = (empleadoId, dias, tipo, descuentos = 0, bonos = 0) => {
     if (!empleadoId || !dias || tipo !== 'pago') return ''
@@ -466,24 +495,56 @@ export const Pagos = () => {
           <div className="form-row">
             <div className="form-group">
               <label>Días Trabajados</label>
-              <input
-                type="number"
-                min="0"
-                max="31"
-                value={formData.dias_trabajados}
-                onChange={(e) => {
-                  const dias = e.target.value
-                  const horas = dias ? (parseFloat(dias) * 10).toFixed(2) : ''
-                  const monto = calcularMonto(formData.empleado_id, dias, formData.tipo, formData.descuentos)
-                  setFormData({ 
-                    ...formData, 
-                    dias_trabajados: dias,
-                    horas_trabajadas: horas,
-                    monto: monto || formData.monto
-                  })
-                }}
-                placeholder="0"
-              />
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <input
+                  type="number"
+                  min="0"
+                  max="31"
+                  value={formData.dias_trabajados}
+                  onChange={(e) => {
+                    const dias = e.target.value
+                    const horas = dias ? (parseFloat(dias) * 10).toFixed(2) : ''
+                    const monto = calcularMonto(formData.empleado_id, dias, formData.tipo, formData.descuentos)
+                    setFormData({ 
+                      ...formData, 
+                      dias_trabajados: dias,
+                      horas_trabajadas: horas,
+                      monto: monto || formData.monto
+                    })
+                  }}
+                  placeholder="0"
+                  style={{ flex: 1 }}
+                />
+                {formData.tipo === 'pago' && formData.empleado_id && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const asistencias = await calcularAsistenciasDelMes(formData.empleado_id, formData.fecha)
+                      if (asistencias.dias > 0) {
+                        const monto = calcularMonto(formData.empleado_id, asistencias.dias, formData.tipo, formData.descuentos)
+                        setFormData({
+                          ...formData,
+                          dias_trabajados: asistencias.dias.toString(),
+                          horas_trabajadas: asistencias.horas.toString(),
+                          monto: monto || formData.monto
+                        })
+                        alert(`✅ Datos cargados desde asistencias:\n${asistencias.dias} días trabajados\n${asistencias.horas} horas trabajadas`)
+                      } else {
+                        alert('⚠️ No hay asistencias registradas para este empleado en el mes seleccionado')
+                      }
+                    }}
+                    className="btn-sugerir-asistencias"
+                    title="Cargar días y horas desde asistencias"
+                  >
+                    📅 Desde Asistencias
+                  </button>
+                )}
+              </div>
+              {formData.tipo === 'pago' && formData.empleado_id && (
+                <small style={{ color: '#10b981', display: 'block', marginTop: '5px' }}>
+                  💡 Haz clic en "Desde Asistencias" para cargar automáticamente los días y horas trabajadas
+                </small>
+              )}
             </div>
 
             <div className="form-group">

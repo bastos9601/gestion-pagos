@@ -52,6 +52,9 @@ export const Layout = ({ children }) => {
           <Link to="/empleados" className={isActive('/empleados') ? 'active' : ''} onClick={closeSidebar}>
             👥 Empleados
           </Link>
+          <Link to="/asistencias" className={isActive('/asistencias') ? 'active' : ''} onClick={closeSidebar}>
+            📅 Asistencias
+          </Link>
           <Link to="/pagos" className={isActive('/pagos') ? 'active' : ''} onClick={closeSidebar}>
             💰 Pagos
           </Link>
