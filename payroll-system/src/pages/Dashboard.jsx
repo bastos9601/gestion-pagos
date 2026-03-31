@@ -71,6 +71,7 @@ export const Dashboard = () => {
   const verificarAsistenciasHoy = async () => {
     try {
       const today = new Date().toISOString().split('T')[0]
+      console.log('📅 Verificando asistencias para:', today)
       
       // Obtener todos los empleados
       const { data: empleados, error: empError } = await supabase
@@ -83,14 +84,44 @@ export const Dashboard = () => {
       // Obtener asistencias de hoy
       const { data: asistenciasHoy, error: asistError } = await supabase
         .from('asistencias')
-        .select('empleado_id, hora_entrada, hora_salida')
+        .select('empleado_id, hora_entrada, hora_salida, fecha')
         .eq('fecha', today)
 
       if (asistError) throw asistError
 
+      console.log('✅ Asistencias de hoy encontradas:', asistenciasHoy?.length || 0)
+
+      // Si no hay asistencias de hoy, buscar las más recientes
+      let asistenciasParaVerificar = asistenciasHoy
+      
+      if (!asistenciasHoy || asistenciasHoy.length === 0) {
+        console.log('⚠️ No hay asistencias de hoy, buscando las más recientes...')
+        
+        // Obtener la fecha más reciente con asistencias
+        const { data: ultimaAsistencia } = await supabase
+          .from('asistencias')
+          .select('fecha')
+          .order('fecha', { ascending: false })
+          .limit(1)
+          .single()
+        
+        if (ultimaAsistencia) {
+          const fechaReciente = ultimaAsistencia.fecha
+          console.log('📅 Última fecha con asistencias:', fechaReciente)
+          
+          // Obtener todas las asistencias de esa fecha
+          const { data: asistenciasRecientes } = await supabase
+            .from('asistencias')
+            .select('empleado_id, hora_entrada, hora_salida, fecha')
+            .eq('fecha', fechaReciente)
+          
+          asistenciasParaVerificar = asistenciasRecientes
+        }
+      }
+
       // Crear mapa de asistencias por empleado
       const asistenciasMap = {}
-      asistenciasHoy?.forEach(a => {
+      asistenciasParaVerificar?.forEach(a => {
         asistenciasMap[a.empleado_id] = a
       })
 
@@ -120,6 +151,7 @@ export const Dashboard = () => {
         }
       })
 
+      console.log('⚠️ Total de alertas:', alertas.length)
       setAlertasAsistencia(alertas)
     } catch (error) {
       console.error('Error al verificar asistencias:', error)
@@ -323,7 +355,7 @@ export const Dashboard = () => {
         <div className="modal-overlay" onClick={() => setShowAlertasModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>⚠️ Alertas de Asistencia - Hoy</h2>
+              <h2>⚠️ Alertas de Asistencia</h2>
               <button onClick={() => setShowAlertasModal(false)} className="btn-close-modal">✕</button>
             </div>
             <div className="modal-body">

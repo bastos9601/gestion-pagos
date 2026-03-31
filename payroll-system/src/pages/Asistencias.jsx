@@ -15,7 +15,7 @@ export const Asistencias = () => {
   const [loading, setLoading] = useState(false)
   const [selectedEmpleado, setSelectedEmpleado] = useState(null)
   const [showRegistration, setShowRegistration] = useState(false)
-  const [filtroFecha, setFiltroFecha] = useState('hoy')
+  const [filtroFecha, setFiltroFecha] = useState('todos')
   const [fechaInicio, setFechaInicio] = useState('')
   const [fechaFin, setFechaFin] = useState('')
   const { config } = useEmpresaConfig()
@@ -42,24 +42,35 @@ export const Asistencias = () => {
 
       // Aplicar filtros de fecha
       const today = new Date().toISOString().split('T')[0]
+      console.log('📅 Fecha de hoy:', today)
+      console.log('🔍 Filtro seleccionado:', filtroFecha)
       
       if (filtroFecha === 'hoy') {
         query = query.eq('fecha', today)
       } else if (filtroFecha === 'semana') {
         const weekAgo = new Date()
         weekAgo.setDate(weekAgo.getDate() - 7)
-        query = query.gte('fecha', weekAgo.toISOString().split('T')[0])
+        const weekAgoStr = weekAgo.toISOString().split('T')[0]
+        console.log('📅 Desde:', weekAgoStr, 'hasta:', today)
+        query = query.gte('fecha', weekAgoStr)
       } else if (filtroFecha === 'mes') {
         const monthAgo = new Date()
         monthAgo.setMonth(monthAgo.getMonth() - 1)
-        query = query.gte('fecha', monthAgo.toISOString().split('T')[0])
+        const monthAgoStr = monthAgo.toISOString().split('T')[0]
+        console.log('📅 Desde:', monthAgoStr, 'hasta:', today)
+        query = query.gte('fecha', monthAgoStr)
       } else if (filtroFecha === 'personalizado' && fechaInicio && fechaFin) {
+        console.log('📅 Desde:', fechaInicio, 'hasta:', fechaFin)
         query = query.gte('fecha', fechaInicio).lte('fecha', fechaFin)
+      } else if (filtroFecha === 'todos') {
+        // No aplicar filtro de fecha
+        console.log('📅 Mostrando todos los registros')
       }
 
       const { data, error } = await query
 
       if (error) throw error
+      console.log('✅ Asistencias cargadas:', data?.length || 0)
       setAsistencias(data || [])
     } catch (err) {
       console.error('Error al cargar asistencias:', err)
@@ -223,6 +234,7 @@ export const Asistencias = () => {
                     value={filtroFecha}
                     onChange={(e) => setFiltroFecha(e.target.value)}
                   >
+                    <option value="todos">Todos</option>
                     <option value="hoy">Hoy</option>
                     <option value="semana">Última semana</option>
                     <option value="mes">Último mes</option>

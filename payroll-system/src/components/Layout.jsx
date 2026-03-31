@@ -41,7 +41,10 @@ export const Layout = ({ children }) => {
 
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <h2>💼 {config.nombre || 'Gestión pago'}</h2>
+          <div className="logo-container">
+            <span className="logo-icon">💼</span>
+            <h2>{config.nombre || 'GestiónPago'}</h2>
+          </div>
           <p className="user-email">{user?.email}</p>
         </div>
         

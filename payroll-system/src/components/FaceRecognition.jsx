@@ -26,6 +26,20 @@ export const FaceRecognition = ({ onSuccess }) => {
     }
   }, [])
 
+  // Iniciar reconocimiento automáticamente cuando los modelos y empleados estén listos
+  useEffect(() => {
+    if (modelsLoaded && empleados.length > 0 && !recognizing && !lastRecognition) {
+      // Esperar un momento para que la cámara esté lista
+      const timer = setTimeout(() => {
+        if (videoRef.current) {
+          startRecognition(videoRef.current)
+        }
+      }, 1000)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [modelsLoaded, empleados, recognizing, lastRecognition])
+
   const initializeSystem = async () => {
     setLoading(true)
     
@@ -195,14 +209,12 @@ export const FaceRecognition = ({ onSuccess }) => {
       // Obtener user_id actual
       const { data: { user } } = await supabase.auth.getUser()
 
-      // Verificar si ya marcó hoy - ser más específico con la fecha
+      // Verificar si ya marcó hoy
       const { data: existingRecords, error: checkError } = await supabase
         .from('asistencias')
         .select('*')
         .eq('empleado_id', match.id)
-        .gte('fecha', today)
-        .lte('fecha', today)
-        .is('hora_salida', null)
+        .eq('fecha', today)
         .order('created_at', { ascending: false })
         .limit(1)
 
@@ -211,7 +223,7 @@ export const FaceRecognition = ({ onSuccess }) => {
         throw checkError
       }
 
-      console.log('📋 Registros existentes (sin salida):', existingRecords)
+      console.log('📋 Registros de hoy:', existingRecords)
 
       let tipoMarca = 'entrada'
       let asistenciaId = null
@@ -220,56 +232,43 @@ export const FaceRecognition = ({ onSuccess }) => {
         const lastRecord = existingRecords[0]
         console.log('📝 Último registro:', lastRecord)
         
+        // Si ya tiene hora de salida, no puede marcar más
         if (lastRecord.hora_salida) {
-          console.log('⚠️ Ya tiene entrada y salida')
-          setError('Ya marcaste entrada y salida hoy')
+          console.log('⚠️ Ya tiene entrada y salida registradas hoy')
+          setError(`Ya marcaste entrada (${new Date(lastRecord.hora_entrada).toLocaleTimeString('es-PE')}) y salida (${new Date(lastRecord.hora_salida).toLocaleTimeString('es-PE')}) hoy`)
           setLoading(false)
           return
         }
 
-        // Marcar salida
-        console.log('🔴 Marcando SALIDA')
-        tipoMarca = 'salida'
-        asistenciaId = lastRecord.id
+        // Si tiene entrada pero NO tiene salida, marcar salida
+        if (lastRecord.hora_entrada && !lastRecord.hora_salida) {
+          console.log('🔴 Marcando SALIDA')
+          tipoMarca = 'salida'
+          asistenciaId = lastRecord.id
 
-        const entrada = new Date(lastRecord.hora_entrada)
-        const salida = new Date(currentTimestamp)
-        const horasTrabajadas = (salida - entrada) / (1000 * 60 * 60)
+          const entrada = new Date(lastRecord.hora_entrada)
+          const salida = new Date(currentTimestamp)
+          const horasTrabajadas = (salida - entrada) / (1000 * 60 * 60)
 
-        console.log('⏱️ Horas trabajadas:', horasTrabajadas)
+          console.log('⏱️ Horas trabajadas:', horasTrabajadas)
 
-        const { error: updateError } = await supabase
-          .from('asistencias')
-          .update({
-            hora_salida: currentTimestamp,
-            horas_trabajadas: horasTrabajadas.toFixed(2),
-          })
-          .eq('id', asistenciaId)
+          const { error: updateError } = await supabase
+            .from('asistencias')
+            .update({
+              hora_salida: currentTimestamp,
+              horas_trabajadas: horasTrabajadas.toFixed(2),
+            })
+            .eq('id', asistenciaId)
 
-        if (updateError) {
-          console.error('❌ Error al actualizar salida:', updateError)
-          throw updateError
+          if (updateError) {
+            console.error('❌ Error al actualizar salida:', updateError)
+            throw updateError
+          }
+          console.log('✅ Salida actualizada correctamente')
         }
-        console.log('✅ Salida actualizada correctamente')
       } else {
-        // Marcar entrada
-        console.log('🟢 Marcando ENTRADA (no hay registros previos)')
-        
-        // Verificar una vez más antes de insertar (por si acaso)
-        const { data: doubleCheck } = await supabase
-          .from('asistencias')
-          .select('id')
-          .eq('empleado_id', match.id)
-          .eq('fecha', today)
-          .limit(1)
-        
-        if (doubleCheck && doubleCheck.length > 0) {
-          console.log('⚠️ Se detectó un registro creado justo ahora, recargando...')
-          setError('Registro detectado, intenta nuevamente')
-          setLoading(false)
-          if (onSuccess) onSuccess()
-          return
-        }
+        // No hay registros de hoy, marcar entrada
+        console.log('🟢 Marcando ENTRADA (primer registro del día)')
         
         const { data: newRecord, error: insertError } = await supabase
           .from('asistencias')
@@ -363,37 +362,21 @@ export const FaceRecognition = ({ onSuccess }) => {
       ) : (
         <>
           <div className="recognition-instructions">
-            <h3>👤 Reconocimiento Facial</h3>
+            <h3>👤 Reconocimiento Facial Automático</h3>
             <p>Colócate frente a la cámara para marcar tu asistencia</p>
             <div className="stats">
               <span>📊 {empleados.length} empleados registrados</span>
+              {recognizing && <span className="status-active">🟢 Reconocimiento activo</span>}
             </div>
           </div>
 
           <WebcamCapture
-            onCapture={recognizing ? null : startRecognition}
+            videoRef={videoRef}
+            onCapture={startRecognition}
+            autoCapture={true}
             isDetecting={recognizing}
             detectionBox={detectionBox}
           />
-
-          <div className="recognition-actions">
-            {!recognizing ? (
-              <button
-                onClick={() => startRecognition(videoRef.current)}
-                className="btn-start-recognition"
-                disabled={loading}
-              >
-                🎯 Iniciar Reconocimiento
-              </button>
-            ) : (
-              <button
-                onClick={stopRecognition}
-                className="btn-stop-recognition"
-              >
-                ⏹️ Detener
-              </button>
-            )}
-          </div>
         </>
       )}
     </div>

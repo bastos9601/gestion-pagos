@@ -30,9 +30,14 @@ export const FaceRegistration = ({ empleado, onComplete, onCancel }) => {
     setLoading(false)
   }
 
-  const handleCapture = async (videoElement) => {
+  const handleCapture = async () => {
     if (!modelsLoaded) {
       setError('Los modelos aún no están cargados')
+      return
+    }
+
+    if (!videoRef.current) {
+      setError('La cámara no está lista')
       return
     }
 
@@ -41,7 +46,7 @@ export const FaceRegistration = ({ empleado, onComplete, onCancel }) => {
 
     try {
       // Detectar rostro
-      const detection = await detectFace(videoElement)
+      const detection = await detectFace(videoRef.current)
 
       if (!detection) {
         setError('No se detectó ningún rostro. Por favor, asegúrate de estar frente a la cámara con buena iluminación.')
@@ -51,10 +56,10 @@ export const FaceRegistration = ({ empleado, onComplete, onCancel }) => {
 
       // Capturar imagen
       const canvas = document.createElement('canvas')
-      canvas.width = videoElement.videoWidth
-      canvas.height = videoElement.videoHeight
+      canvas.width = videoRef.current.videoWidth
+      canvas.height = videoRef.current.videoHeight
       const ctx = canvas.getContext('2d')
-      ctx.drawImage(videoElement, 0, 0)
+      ctx.drawImage(videoRef.current, 0, 0)
       const imageData = canvas.toDataURL('image/jpeg', 0.8)
 
       // Guardar foto y descriptor
@@ -172,8 +177,10 @@ export const FaceRegistration = ({ empleado, onComplete, onCancel }) => {
           </div>
 
           <WebcamCapture
+            videoRef={videoRef}
+            showCaptureButton={true}
             onCapture={handleCapture}
-            isDetecting={modelsLoaded}
+            isDetecting={false}
             detectionBox={detectionBox}
           />
 

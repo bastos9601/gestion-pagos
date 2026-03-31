@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS asistencias CASCADE;
 -- PASO 2: Crear tabla de asistencias
 CREATE TABLE asistencias (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   empleado_id UUID REFERENCES empleados(id) ON DELETE CASCADE,
   fecha DATE NOT NULL,
   hora_entrada TIMESTAMP,
@@ -18,8 +19,7 @@ CREATE TABLE asistencias (
   confianza_reconocimiento DECIMAL(5,2),
   observaciones TEXT,
   created_at TIMESTAMP DEFAULT NOW(),
-  user_id UUID,
-  UNIQUE(empleado_id, fecha)
+  UNIQUE(user_id, empleado_id, fecha)
 );
 
 -- PASO 3: Agregar columnas a empleados para reconocimiento facial
@@ -43,16 +43,33 @@ ALTER TABLE asistencias ENABLE ROW LEVEL SECURITY;
 -- PASO 6: Crear políticas RLS
 CREATE POLICY "Users can view their own asistencias"
   ON asistencias FOR SELECT
-  USING (user_id = auth.uid() OR user_id IS NULL);
+  USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can insert their own asistencias"
   ON asistencias FOR INSERT
-  WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
+  WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can update their own asistencias"
   ON asistencias FOR UPDATE
-  USING (user_id = auth.uid() OR user_id IS NULL);
+  USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete their own asistencias"
   ON asistencias FOR DELETE
-  USING (user_id = auth.uid() OR user_id IS NULL);
+  USING (auth.uid() = user_id);
+
+-- PASO 7: Crear trigger para auto-asignar user_id
+CREATE OR REPLACE FUNCTION set_user_id_asistencias()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.user_id IS NULL THEN
+    NEW.user_id := auth.uid();
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trigger_set_user_id_asistencias ON asistencias;
+CREATE TRIGGER trigger_set_user_id_asistencias
+  BEFORE INSERT ON asistencias
+  FOR EACH ROW
+  EXECUTE FUNCTION set_user_id_asistencias();

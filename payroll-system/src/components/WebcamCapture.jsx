@@ -2,8 +2,9 @@
 import { useEffect, useRef, useState } from 'react'
 import '../styles/WebcamCapture.css'
 
-export const WebcamCapture = ({ onCapture, isDetecting = false, detectionBox = null }) => {
-  const videoRef = useRef(null)
+export const WebcamCapture = ({ onCapture, isDetecting = false, detectionBox = null, autoCapture = false, showCaptureButton = false, videoRef: externalVideoRef }) => {
+  const internalVideoRef = useRef(null)
+  const videoRef = externalVideoRef || internalVideoRef
   const canvasRef = useRef(null)
   const [stream, setStream] = useState(null)
   const [error, setError] = useState(null)
@@ -32,6 +33,13 @@ export const WebcamCapture = ({ onCapture, isDetecting = false, detectionBox = n
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream
         setStream(mediaStream)
+        
+        // Solo llamar onCapture automáticamente si autoCapture es true
+        videoRef.current.onloadedmetadata = () => {
+          if (autoCapture && onCapture) {
+            onCapture(videoRef.current)
+          }
+        }
       }
     } catch (err) {
       console.error('Error al acceder a la cámara:', err)
@@ -137,9 +145,9 @@ export const WebcamCapture = ({ onCapture, isDetecting = false, detectionBox = n
         )}
       </div>
 
-      {onCapture && (
+      {showCaptureButton && (
         <button onClick={handleCapture} className="btn-capture">
-          📸 Capturar Foto
+          📸 Capturar
         </button>
       )}
     </div>
