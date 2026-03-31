@@ -1,0 +1,211 @@
+/* Estilos para la página de pago pendiente */
+
+.pago-pendiente-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pendiente-container {
+  max-width: 600px;
+  width: 100%;
+  background: white;
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.icono-reloj {
+  margin-bottom: 2rem;
+}
+
+.reloj-animado {
+  font-size: 5rem;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.pendiente-container h1 {
+  margin: 0 0 1rem 0;
+  font-size: 2rem;
+  color: #1f2937;
+}
+
+.mensaje-principal {
+  margin: 0 0 2rem 0;
+  color: #6b7280;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.info-pago {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-item .label {
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.info-item .valor {
+  color: #1f2937;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.info-item .estado {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.estado.pendiente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.estado.activa {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.instrucciones-espera {
+  background: #eff6ff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.instrucciones-espera h3 {
+  margin: 0 0 1rem 0;
+  color: #1e40af;
+  font-size: 1.1rem;
+}
+
+.instrucciones-espera ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.instrucciones-espera li {
+  padding: 0.5rem 0;
+  color: #1e40af;
+  font-size: 0.95rem;
+}
+
+.acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.btn-verificar {
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-verificar:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.4);
+}
+
+.btn-verificar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-salir {
+  padding: 0.875rem 2rem;
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-salir:hover {
+  background: #e5e7eb;
+}
+
+.contacto {
+  padding-top: 2rem;
+  border-top: 2px solid #e5e7eb;
+}
+
+.contacto p {
+  margin: 0 0 0.5rem 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.link-contacto {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.link-contacto:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .pago-pendiente-page {
+    padding: 1rem;
+  }
+
+  .pendiente-container {
+    padding: 2rem 1.5rem;
+  }
+
+  .pendiente-container h1 {
+    font-size: 1.5rem;
+  }
+
+  .reloj-animado {
+    font-size: 4rem;
+  }
+}
