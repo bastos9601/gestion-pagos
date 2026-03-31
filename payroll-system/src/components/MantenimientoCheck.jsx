@@ -12,8 +12,7 @@ export const MantenimientoCheck = ({ children }) => {
   const location = useLocation()
 
   // Rutas que NO deben ser bloqueadas por mantenimiento
-  const rutasExcluidas = ['/admin/login', '/admin/dashboard', '/admin/usuarios', '/admin/pagos', '/admin/configuracion']
-  const esRutaAdmin = rutasExcluidas.some(ruta => location.pathname.startsWith(ruta.split('/').slice(0, 2).join('/')))
+  const esRutaAdmin = location.pathname.startsWith('/admin')
 
   useEffect(() => {
     verificarMantenimiento()

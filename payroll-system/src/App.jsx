@@ -24,8 +24,8 @@ import { AdminRoute } from './components/AdminRoute'
 function App() {
   return (
     <AuthProvider>
-      <MantenimientoCheck>
-        <BrowserRouter>
+      <BrowserRouter>
+        <MantenimientoCheck>
           <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/pago-yape" element={<PagoYape />} />
@@ -144,8 +144,8 @@ function App() {
           
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
+        </MantenimientoCheck>
       </BrowserRouter>
-      </MantenimientoCheck>
     </AuthProvider>
   )
 }
