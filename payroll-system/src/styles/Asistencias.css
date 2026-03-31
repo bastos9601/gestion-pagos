@@ -236,12 +236,33 @@
   font-size: 0.875rem;
   color: #6b7280;
   font-weight: 500;
+  flex-shrink: 0;
 }
 
 .card-row .value {
   font-size: 0.875rem;
   color: #1f2937;
   font-weight: 600;
+}
+
+.card-row .value-with-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.card-row .value-with-badge .value {
+  font-size: 0.875rem;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.card-row .value-with-badge .status-badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.4rem;
+  white-space: nowrap;
 }
 
 .card-actions {
@@ -360,6 +381,32 @@
   background: #e5e7eb;
 }
 
+.botones-reporte {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-ver-reporte {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-ver-reporte:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
 .btn-descargar-reporte {
   display: flex;
   align-items: center;
@@ -439,6 +486,12 @@
     flex-direction: column;
   }
 
+  .botones-reporte {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .btn-ver-reporte,
   .btn-descargar-reporte {
     width: 100%;
     justify-content: center;
@@ -484,4 +537,67 @@
   .asistencias-table td {
     padding: 0.5rem 0.25rem;
   }
+}
+
+/* Badges de estado de entrada/salida */
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+.badge-a-tiempo {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-a-tiempo-tolerancia {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge-tardanza {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.badge-normal {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-horas-extras {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.badge-temprano {
+  background: #fed7aa;
+  color: #9a3412;
+}
+
+.hora-entrada,
+.hora-salida {
+  min-width: 120px;
+  vertical-align: top;
+}
+
+.hora-entrada {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.hora-salida {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.hora-entrada .status-badge,
+.hora-salida .status-badge {
+  display: block;
+  margin-top: 4px;
 }

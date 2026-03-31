@@ -5,7 +5,8 @@ import { FaceRecognition } from '../components/FaceRecognition'
 import { FaceRegistration } from '../components/FaceRegistration'
 import { useEmpresaConfig } from '../hooks/useEmpresaConfig'
 import { generarReporteAsistenciasPDF } from '../utils/asistenciasPdfGenerator'
-import { Download } from 'lucide-react'
+import { generarReporteAsistenciasHTML } from '../utils/asistenciasHtmlGenerator'
+import { Download, Eye } from 'lucide-react'
 import '../styles/Asistencias.css'
 
 export const Asistencias = () => {
@@ -40,23 +41,51 @@ export const Asistencias = () => {
         .order('fecha', { ascending: false })
         .order('hora_entrada', { ascending: false })
 
-      // Aplicar filtros de fecha
-      const today = new Date().toISOString().split('T')[0]
-      console.log('📅 Fecha de hoy:', today)
+      // Aplicar filtros de fecha usando zona horaria de Perú
+      const now = new Date()
+      const peruFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Lima',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      })
+      
+      const parts = peruFormatter.formatToParts(now)
+      const peruDate = {
+        year: parts.find(p => p.type === 'year').value,
+        month: parts.find(p => p.type === 'month').value,
+        day: parts.find(p => p.type === 'day').value,
+      }
+      
+      const today = `${peruDate.year}-${peruDate.month}-${peruDate.day}`
+      console.log('📅 Fecha de hoy (Perú):', today)
       console.log('🔍 Filtro seleccionado:', filtroFecha)
       
       if (filtroFecha === 'hoy') {
+        console.log('🔍 Buscando asistencias con fecha:', today)
         query = query.eq('fecha', today)
       } else if (filtroFecha === 'semana') {
         const weekAgo = new Date()
         weekAgo.setDate(weekAgo.getDate() - 7)
-        const weekAgoStr = weekAgo.toISOString().split('T')[0]
+        const weekAgoParts = peruFormatter.formatToParts(weekAgo)
+        const weekAgoDate = {
+          year: weekAgoParts.find(p => p.type === 'year').value,
+          month: weekAgoParts.find(p => p.type === 'month').value,
+          day: weekAgoParts.find(p => p.type === 'day').value,
+        }
+        const weekAgoStr = `${weekAgoDate.year}-${weekAgoDate.month}-${weekAgoDate.day}`
         console.log('📅 Desde:', weekAgoStr, 'hasta:', today)
         query = query.gte('fecha', weekAgoStr)
       } else if (filtroFecha === 'mes') {
         const monthAgo = new Date()
         monthAgo.setMonth(monthAgo.getMonth() - 1)
-        const monthAgoStr = monthAgo.toISOString().split('T')[0]
+        const monthAgoParts = peruFormatter.formatToParts(monthAgo)
+        const monthAgoDate = {
+          year: monthAgoParts.find(p => p.type === 'year').value,
+          month: monthAgoParts.find(p => p.type === 'month').value,
+          day: monthAgoParts.find(p => p.type === 'day').value,
+        }
+        const monthAgoStr = `${monthAgoDate.year}-${monthAgoDate.month}-${monthAgoDate.day}`
         console.log('📅 Desde:', monthAgoStr, 'hasta:', today)
         query = query.gte('fecha', monthAgoStr)
       } else if (filtroFecha === 'personalizado' && fechaInicio && fechaFin) {
@@ -71,6 +100,9 @@ export const Asistencias = () => {
 
       if (error) throw error
       console.log('✅ Asistencias cargadas:', data?.length || 0)
+      if (data && data.length > 0) {
+        console.log('📋 Primeras fechas encontradas:', data.slice(0, 3).map(a => a.fecha))
+      }
       setAsistencias(data || [])
     } catch (err) {
       console.error('Error al cargar asistencias:', err)
@@ -160,12 +192,62 @@ export const Asistencias = () => {
     return { texto: 'Incompleto', clase: 'incompleto' }
   }
 
+  const getEstadoEntradaBadge = (asistencia) => {
+    if (!asistencia.estado_entrada) return null
+    
+    if (asistencia.estado_entrada === 'tardanza') {
+      return {
+        texto: `⚠️ Tardanza (${asistencia.minutos_tardanza || 0} min)`,
+        clase: 'badge-tardanza'
+      }
+    } else if (asistencia.minutos_tardanza > 0) {
+      return {
+        texto: `✅ A tiempo (+${asistencia.minutos_tardanza} min)`,
+        clase: 'badge-a-tiempo-tolerancia'
+      }
+    } else {
+      return {
+        texto: '✅ A tiempo',
+        clase: 'badge-a-tiempo'
+      }
+    }
+  }
+
+  const getEstadoSalidaBadge = (asistencia) => {
+    if (!asistencia.hora_salida || !asistencia.estado_salida) return null
+    
+    if (asistencia.estado_salida === 'horas_extras') {
+      return {
+        texto: `⏰ Horas extras (+${asistencia.horas_extras || 0}h)`,
+        clase: 'badge-horas-extras'
+      }
+    } else if (asistencia.estado_salida === 'temprano') {
+      return {
+        texto: '⚠️ Salida temprana',
+        clase: 'badge-temprano'
+      }
+    } else {
+      return {
+        texto: '✅ Normal',
+        clase: 'badge-normal'
+      }
+    }
+  }
+
   const handleDescargarReporte = () => {
     if (asistencias.length === 0) {
       alert('No hay registros para generar el reporte')
       return
     }
-    generarReporteAsistenciasPDF(asistencias, config, filtroFecha)
+    generarReporteAsistenciasPDF(asistencias, config, filtroFecha, fechaInicio, fechaFin)
+  }
+
+  const handleVerReporte = () => {
+    if (asistencias.length === 0) {
+      alert('No hay registros para generar el reporte')
+      return
+    }
+    generarReporteAsistenciasHTML(asistencias, config, filtroFecha, fechaInicio, fechaFin)
   }
 
   const handleDeleteAsistencia = async (asistenciaId, empleadoNombre) => {
@@ -265,10 +347,16 @@ export const Asistencias = () => {
               </div>
 
               {asistencias.length > 0 && (
-                <button onClick={handleDescargarReporte} className="btn-descargar-reporte">
-                  <Download size={18} />
-                  Descargar Reporte PDF
-                </button>
+                <div className="botones-reporte">
+                  <button onClick={handleVerReporte} className="btn-ver-reporte">
+                    <Eye size={18} />
+                    Ver Reporte
+                  </button>
+                  <button onClick={handleDescargarReporte} className="btn-descargar-reporte">
+                    <Download size={18} />
+                    Descargar PDF
+                  </button>
+                </div>
               )}
             </div>
 
@@ -305,9 +393,19 @@ export const Asistencias = () => {
                             <td>{asistencia.empleados.dni}</td>
                             <td className="hora-entrada">
                               {formatTime(asistencia.hora_entrada)}
+                              {getEstadoEntradaBadge(asistencia) && (
+                                <span className={`status-badge ${getEstadoEntradaBadge(asistencia).clase}`}>
+                                  {getEstadoEntradaBadge(asistencia).texto}
+                                </span>
+                              )}
                             </td>
                             <td className="hora-salida">
                               {formatTime(asistencia.hora_salida)}
+                              {getEstadoSalidaBadge(asistencia) && (
+                                <span className={`status-badge ${getEstadoSalidaBadge(asistencia).clase}`}>
+                                  {getEstadoSalidaBadge(asistencia).texto}
+                                </span>
+                              )}
                             </td>
                             <td>
                               {asistencia.horas_trabajadas
@@ -358,11 +456,25 @@ export const Asistencias = () => {
                           </div>
                           <div className="card-row">
                             <span className="label">🟢 Entrada:</span>
-                            <span className="value hora-entrada">{formatTime(asistencia.hora_entrada)}</span>
+                            <div className="value-with-badge">
+                              <span className="value hora-entrada">{formatTime(asistencia.hora_entrada)}</span>
+                              {getEstadoEntradaBadge(asistencia) && (
+                                <span className={`status-badge ${getEstadoEntradaBadge(asistencia).clase}`}>
+                                  {getEstadoEntradaBadge(asistencia).texto}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <div className="card-row">
                             <span className="label">🔴 Salida:</span>
-                            <span className="value hora-salida">{formatTime(asistencia.hora_salida)}</span>
+                            <div className="value-with-badge">
+                              <span className="value hora-salida">{formatTime(asistencia.hora_salida)}</span>
+                              {getEstadoSalidaBadge(asistencia) && (
+                                <span className={`status-badge ${getEstadoSalidaBadge(asistencia).clase}`}>
+                                  {getEstadoSalidaBadge(asistencia).texto}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <div className="card-row">
                             <span className="label">⏱️ Horas:</span>

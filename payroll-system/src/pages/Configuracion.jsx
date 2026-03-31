@@ -19,6 +19,11 @@ export const Configuracion = () => {
     telefono: '',
     email: '',
     firma_url: '',
+    hora_entrada_laboral: '08:00',
+    hora_salida_laboral: '18:00',
+    tolerancia_minutos: 15,
+    hora_inicio_almuerzo: '13:00',
+    duracion_almuerzo_minutos: 90,
   })
 
   useEffect(() => {
@@ -49,6 +54,11 @@ export const Configuracion = () => {
           telefono: data.telefono || '',
           email: data.email || '',
           firma_url: data.firma_url || '',
+          hora_entrada_laboral: data.hora_entrada_laboral?.substring(0, 5) || '08:00',
+          hora_salida_laboral: data.hora_salida_laboral?.substring(0, 5) || '18:00',
+          tolerancia_minutos: data.tolerancia_minutos || 15,
+          hora_inicio_almuerzo: data.hora_inicio_almuerzo?.substring(0, 5) || '13:00',
+          duracion_almuerzo_minutos: data.duracion_almuerzo_minutos || 90,
         })
         setFirmaDataURL(data.firma_url || null)
       }
@@ -204,67 +214,227 @@ export const Configuracion = () => {
                 placeholder="contacto@empresa.com"
               />
             </div>
+          </div>
+
+          <div className="form-section">
+            <h3>⏰ Horario Laboral</h3>
+            <p className="section-description">
+              Configura el horario de trabajo para controlar tardanzas y horas extras
+            </p>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Hora de Entrada *</label>
+                <input
+                  type="time"
+                  name="hora_entrada_laboral"
+                  value={formData.hora_entrada_laboral}
+                  onChange={handleChange}
+                  required
+                />
+                <small>Hora en que los empleados deben ingresar</small>
+              </div>
+
+              <div className="form-group">
+                <label>Hora de Salida *</label>
+                <input
+                  type="time"
+                  name="hora_salida_laboral"
+                  value={formData.hora_salida_laboral}
+                  onChange={handleChange}
+                  required
+                />
+                <small>Hora en que los empleados deben salir</small>
+              </div>
+            </div>
 
             <div className="form-group">
-              <label>Firma Digital del Empleador</label>
-              
-              {!showFirmaCanvas && !firmaDataURL && (
-                <button 
-                  type="button" 
-                  onClick={() => setShowFirmaCanvas(true)}
-                  className="btn-crear-firma"
-                >
-                  ✍️ Crear Firma Digital
-                </button>
-              )}
-
-              {showFirmaCanvas && (
-                <FirmaCanvas 
-                  onSave={handleSaveFirma}
-                  initialSignature={firmaDataURL}
-                />
-              )}
-
-              {!showFirmaCanvas && firmaDataURL && (
-                <div style={{ 
-                  border: '1px solid #ddd', 
-                  padding: '15px', 
-                  borderRadius: '8px', 
-                  backgroundColor: '#f9f9f9',
-                  textAlign: 'center'
-                }}>
-                  <p style={{ marginBottom: '10px', fontWeight: 'bold' }}>Firma guardada:</p>
-                  <img 
-                    src={firmaDataURL} 
-                    alt="Firma" 
-                    style={{ 
-                      maxWidth: '300px', 
-                      maxHeight: '100px', 
-                      objectFit: 'contain',
-                      border: '1px solid #ccc',
-                      padding: '5px',
-                      backgroundColor: 'white'
-                    }}
-                  />
-                  <div style={{ marginTop: '10px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                    <button 
-                      type="button" 
-                      onClick={() => setShowFirmaCanvas(true)}
-                      className="btn-editar-firma"
-                    >
-                      ✏️ Editar Firma
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={handleDeleteFirma}
-                      className="btn-eliminar-firma"
-                    >
-                      🗑️ Eliminar Firma
-                    </button>
-                  </div>
-                </div>
-              )}
+              <label>Tolerancia para Tardanza (minutos) *</label>
+              <input
+                type="number"
+                name="tolerancia_minutos"
+                value={formData.tolerancia_minutos}
+                onChange={handleChange}
+                required
+                min="0"
+                max="60"
+                placeholder="15"
+              />
+              <small>
+                Minutos de tolerancia antes de marcar como tardanza. 
+                Ejemplo: Si la entrada es 08:00 y la tolerancia es 15 min, 
+                se considera tardanza después de las 08:15
+              </small>
             </div>
+
+            <div className="horario-preview">
+              <h4>📋 Resumen del Horario:</h4>
+              <ul>
+                <li>
+                  <strong>Entrada:</strong> {formData.hora_entrada_laboral} 
+                  (tolerancia hasta {
+                    (() => {
+                      const [h, m] = formData.hora_entrada_laboral.split(':')
+                      const totalMin = parseInt(h) * 60 + parseInt(m) + parseInt(formData.tolerancia_minutos)
+                      const newH = Math.floor(totalMin / 60)
+                      const newM = totalMin % 60
+                      return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`
+                    })()
+                  })
+                </li>
+                <li><strong>Salida:</strong> {formData.hora_salida_laboral}</li>
+                <li>
+                  <strong>Jornada:</strong> {
+                    (() => {
+                      const [h1, m1] = formData.hora_entrada_laboral.split(':')
+                      const [h2, m2] = formData.hora_salida_laboral.split(':')
+                      const totalMin = (parseInt(h2) * 60 + parseInt(m2)) - (parseInt(h1) * 60 + parseInt(m1))
+                      const hours = Math.floor(totalMin / 60)
+                      const mins = totalMin % 60
+                      return `${hours}h ${mins}min`
+                    })()
+                  }
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="form-section">
+            <h3>🍽️ Horario de Almuerzo</h3>
+            <p className="section-description">
+              Configura el horario de almuerzo para descontar automáticamente del cálculo de horas trabajadas
+            </p>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Hora de Inicio de Almuerzo *</label>
+                <input
+                  type="time"
+                  name="hora_inicio_almuerzo"
+                  value={formData.hora_inicio_almuerzo}
+                  onChange={handleChange}
+                  required
+                />
+                <small>Hora en que inicia el almuerzo (ej: 13:00 = 1:00 PM)</small>
+              </div>
+
+              <div className="form-group">
+                <label>Duración del Almuerzo (minutos) *</label>
+                <input
+                  type="number"
+                  name="duracion_almuerzo_minutos"
+                  value={formData.duracion_almuerzo_minutos}
+                  onChange={handleChange}
+                  required
+                  min="0"
+                  max="180"
+                  placeholder="90"
+                />
+                <small>Minutos de almuerzo (ej: 90 = 1.5 horas)</small>
+              </div>
+            </div>
+
+            <div className="horario-preview">
+              <h4>🍽️ Resumen del Almuerzo:</h4>
+              <ul>
+                <li>
+                  <strong>Inicio:</strong> {formData.hora_inicio_almuerzo}
+                </li>
+                <li>
+                  <strong>Fin:</strong> {
+                    (() => {
+                      const [h, m] = formData.hora_inicio_almuerzo.split(':')
+                      const totalMin = parseInt(h) * 60 + parseInt(m) + parseInt(formData.duracion_almuerzo_minutos)
+                      const newH = Math.floor(totalMin / 60)
+                      const newM = totalMin % 60
+                      return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`
+                    })()
+                  }
+                </li>
+                <li>
+                  <strong>Duración:</strong> {
+                    (() => {
+                      const hours = Math.floor(formData.duracion_almuerzo_minutos / 60)
+                      const mins = formData.duracion_almuerzo_minutos % 60
+                      return hours > 0 ? `${hours}h ${mins}min` : `${mins}min`
+                    })()
+                  }
+                </li>
+                <li>
+                  <strong>Horas efectivas de trabajo:</strong> {
+                    (() => {
+                      const [h1, m1] = formData.hora_entrada_laboral.split(':')
+                      const [h2, m2] = formData.hora_salida_laboral.split(':')
+                      const totalMin = (parseInt(h2) * 60 + parseInt(m2)) - (parseInt(h1) * 60 + parseInt(m1)) - parseInt(formData.duracion_almuerzo_minutos)
+                      const hours = Math.floor(totalMin / 60)
+                      const mins = totalMin % 60
+                      return `${hours}h ${mins}min`
+                    })()
+                  }
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="form-section">
+            <h3>✍️ Firma Digital</h3>
+              
+            {!showFirmaCanvas && !firmaDataURL && (
+              <button 
+                type="button" 
+                onClick={() => setShowFirmaCanvas(true)}
+                className="btn-crear-firma"
+              >
+                ✍️ Crear Firma Digital
+              </button>
+            )}
+
+            {showFirmaCanvas && (
+              <FirmaCanvas 
+                onSave={handleSaveFirma}
+                initialSignature={firmaDataURL}
+              />
+            )}
+
+            {!showFirmaCanvas && firmaDataURL && (
+              <div style={{ 
+                border: '1px solid #ddd', 
+                padding: '15px', 
+                borderRadius: '8px', 
+                backgroundColor: '#f9f9f9',
+                textAlign: 'center'
+              }}>
+                <p style={{ marginBottom: '10px', fontWeight: 'bold' }}>Firma guardada:</p>
+                <img 
+                  src={firmaDataURL} 
+                  alt="Firma" 
+                  style={{ 
+                    maxWidth: '300px', 
+                    maxHeight: '100px', 
+                    objectFit: 'contain',
+                    border: '1px solid #ccc',
+                    padding: '5px',
+                    backgroundColor: 'white'
+                  }}
+                />
+                <div style={{ marginTop: '10px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowFirmaCanvas(true)}
+                    className="btn-editar-firma"
+                  >
+                    ✏️ Editar Firma
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={handleDeleteFirma}
+                    className="btn-eliminar-firma"
+                  >
+                    🗑️ Eliminar Firma
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="form-actions">

@@ -1,7 +1,7 @@
 // Generador de PDF para reportes de asistencias
 import { jsPDF } from 'jspdf'
 
-export const generarReporteAsistenciasPDF = (asistencias, config, filtro) => {
+export const generarReporteAsistenciasPDF = (asistencias, config, filtro, fechaInicio = '', fechaFin = '') => {
   const doc = new jsPDF()
   
   // Configuración
@@ -58,8 +58,20 @@ export const generarReporteAsistenciasPDF = (asistencias, config, filtro) => {
     periodoTexto = 'Última semana'
   } else if (filtro === 'mes') {
     periodoTexto = 'Último mes'
+  } else if (filtro === 'personalizado' && fechaInicio && fechaFin) {
+    const fechaInicioFormat = new Date(fechaInicio + 'T00:00:00').toLocaleDateString('es-PE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })
+    const fechaFinFormat = new Date(fechaFin + 'T00:00:00').toLocaleDateString('es-PE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })
+    periodoTexto = `Del ${fechaInicioFormat} al ${fechaFinFormat}`
   } else {
-    periodoTexto = 'Período personalizado'
+    periodoTexto = 'Todos los registros'
   }
   doc.text(`Período: ${periodoTexto}`, margin, yPos)
 
@@ -78,6 +90,8 @@ export const generarReporteAsistenciasPDF = (asistencias, config, filtro) => {
   const registrosIncompletos = asistencias.filter(a => a.horas_trabajadas && a.horas_trabajadas < 10).length
   const registrosEnCurso = asistencias.filter(a => !a.hora_salida).length
   const totalHoras = asistencias.reduce((sum, a) => sum + (parseFloat(a.horas_trabajadas) || 0), 0)
+  const totalTardanzas = asistencias.filter(a => a.estado_entrada === 'tardanza').length
+  const totalHorasExtras = asistencias.reduce((sum, a) => sum + (parseFloat(a.horas_extras) || 0), 0)
 
   doc.text(`Total de registros: ${totalRegistros}`, margin, yPos)
   yPos += 4
@@ -88,12 +102,19 @@ export const generarReporteAsistenciasPDF = (asistencias, config, filtro) => {
   doc.text(`En curso: ${registrosEnCurso}`, margin, yPos)
   yPos += 4
   doc.text(`Total horas trabajadas: ${totalHoras.toFixed(1)}h`, margin, yPos)
+  yPos += 4
+  doc.setTextColor(220, 38, 38)
+  doc.text(`Tardanzas: ${totalTardanzas}`, margin, yPos)
+  yPos += 4
+  doc.setTextColor(79, 70, 229)
+  doc.text(`Total horas extras: ${totalHorasExtras.toFixed(1)}h`, margin, yPos)
+  doc.setTextColor(0, 0, 0)
 
   // Tabla de asistencias
   yPos += 8
 
   // Encabezados de tabla
-  const colWidths = [25, 55, 25, 20, 20, 15, 25]
+  const colWidths = [22, 45, 22, 25, 25, 13, 28]
   const headers = ['Fecha', 'Empleado', 'DNI', 'Entrada', 'Salida', 'Horas', 'Estado']
   
   // Dibujar encabezado de tabla
@@ -125,7 +146,7 @@ export const generarReporteAsistenciasPDF = (asistencias, config, filtro) => {
     // Alternar color de fondo
     if (index % 2 === 0) {
       doc.setFillColor(249, 250, 251)
-      doc.rect(margin, yPos, pageWidth - 2 * margin, 6, 'F')
+      doc.rect(margin, yPos, pageWidth - 2 * margin, 10, 'F')
     }
 
     const fecha = new Date(asistencia.fecha + 'T00:00:00').toLocaleDateString('es-PE', {
@@ -159,16 +180,24 @@ export const generarReporteAsistenciasPDF = (asistencias, config, filtro) => {
       estado = 'Incompleto'
     }
 
+    // Indicadores de tardanza y horas extras
+    const esTardanza = asistencia.estado_entrada === 'tardanza'
+    const tieneHorasExtras = asistencia.estado_salida === 'horas_extras'
+    const minutosTardanza = asistencia.minutos_tardanza || 0
+    const horasExtras = asistencia.horas_extras || 0
+
     xPos = margin + 2
     
     // Fecha
     doc.setTextColor(0, 0, 0)
+    doc.setFontSize(7)
+    doc.setFont('helvetica', 'normal')
     doc.text(fecha, xPos, yPos + 4)
     xPos += colWidths[0]
     
     // Empleado (truncar si es muy largo)
-    const nombreTruncado = asistencia.empleados.nombre.length > 25 
-      ? asistencia.empleados.nombre.substring(0, 22) + '...'
+    const nombreTruncado = asistencia.empleados.nombre.length > 20 
+      ? asistencia.empleados.nombre.substring(0, 17) + '...'
       : asistencia.empleados.nombre
     doc.text(nombreTruncado, xPos, yPos + 4)
     xPos += colWidths[1]
@@ -177,15 +206,40 @@ export const generarReporteAsistenciasPDF = (asistencias, config, filtro) => {
     doc.text(asistencia.empleados.dni, xPos, yPos + 4)
     xPos += colWidths[2]
     
-    // Entrada (verde)
-    doc.setTextColor(16, 185, 129)
+    // Entrada (verde o rojo si hay tardanza)
+    if (esTardanza) {
+      doc.setTextColor(220, 38, 38)
+    } else {
+      doc.setTextColor(16, 185, 129)
+    }
     doc.setFont('helvetica', 'bold')
     doc.text(entrada, xPos, yPos + 4)
+    
+    // Indicador de tardanza
+    if (esTardanza) {
+      doc.setFontSize(6)
+      doc.setFont('helvetica', 'normal')
+      doc.text(`+${minutosTardanza}m`, xPos, yPos + 7)
+      doc.setFontSize(7)
+    }
     xPos += colWidths[3]
     
-    // Salida (rojo)
-    doc.setTextColor(239, 68, 68)
+    // Salida (rojo o morado si hay horas extras)
+    if (tieneHorasExtras) {
+      doc.setTextColor(79, 70, 229)
+    } else {
+      doc.setTextColor(239, 68, 68)
+    }
+    doc.setFont('helvetica', 'bold')
     doc.text(salida, xPos, yPos + 4)
+    
+    // Indicador de horas extras
+    if (tieneHorasExtras) {
+      doc.setFontSize(6)
+      doc.setFont('helvetica', 'normal')
+      doc.text(`+${horasExtras.toFixed(1)}h`, xPos, yPos + 7)
+      doc.setFontSize(7)
+    }
     xPos += colWidths[4]
     
     // Horas
@@ -204,7 +258,7 @@ export const generarReporteAsistenciasPDF = (asistencias, config, filtro) => {
     }
     doc.text(estado, xPos, yPos + 4)
 
-    yPos += 6
+    yPos += 10
   })
 
   // Línea final de tabla
