@@ -1,5 +1,6 @@
 // Componente para verificar modo mantenimiento
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { supabase } from '../services/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 
@@ -8,6 +9,11 @@ export const MantenimientoCheck = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [esAdmin, setEsAdmin] = useState(false)
   const { user } = useAuth()
+  const location = useLocation()
+
+  // Rutas que NO deben ser bloqueadas por mantenimiento
+  const rutasExcluidas = ['/admin/login', '/admin/dashboard', '/admin/usuarios', '/admin/pagos', '/admin/configuracion']
+  const esRutaAdmin = rutasExcluidas.some(ruta => location.pathname.startsWith(ruta.split('/').slice(0, 2).join('/')))
 
   useEffect(() => {
     verificarMantenimiento()
@@ -74,8 +80,8 @@ export const MantenimientoCheck = ({ children }) => {
     )
   }
 
-  // Si está en mantenimiento y NO es admin, mostrar pantalla de mantenimiento
-  if (modoMantenimiento && !esAdmin) {
+  // Si está en mantenimiento y NO es admin y NO es ruta de admin, mostrar pantalla de mantenimiento
+  if (modoMantenimiento && !esAdmin && !esRutaAdmin) {
     return (
       <div style={{
         display: 'flex',
