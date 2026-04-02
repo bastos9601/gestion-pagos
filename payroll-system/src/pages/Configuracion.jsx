@@ -24,6 +24,7 @@ export const Configuracion = () => {
     tolerancia_minutos: 15,
     hora_inicio_almuerzo: '13:00',
     duracion_almuerzo_minutos: 90,
+    horas_por_dia: 8,
   })
 
   useEffect(() => {
@@ -59,6 +60,7 @@ export const Configuracion = () => {
           tolerancia_minutos: data.tolerancia_minutos || 15,
           hora_inicio_almuerzo: data.hora_inicio_almuerzo?.substring(0, 5) || '13:00',
           duracion_almuerzo_minutos: data.duracion_almuerzo_minutos || 90,
+          horas_por_dia: data.horas_por_dia || 8,
         })
         setFirmaDataURL(data.firma_url || null)
       }
@@ -267,6 +269,7 @@ export const Configuracion = () => {
               </small>
             </div>
 
+            {/* Resumen del Horario - Oculto temporalmente
             <div className="horario-preview">
               <h4>📋 Resumen del Horario:</h4>
               <ul>
@@ -297,6 +300,7 @@ export const Configuracion = () => {
                 </li>
               </ul>
             </div>
+            */}
           </div>
 
           <div className="form-section">
@@ -373,6 +377,25 @@ export const Configuracion = () => {
                   }
                 </li>
               </ul>
+            </div>
+
+            <div className="form-group">
+              <label>Horas de Trabajo por Día *</label>
+              <input
+                type="number"
+                name="horas_por_dia"
+                value={formData.horas_por_dia}
+                onChange={handleChange}
+                required
+                min="1"
+                max="24"
+                step="0.5"
+                placeholder="8"
+              />
+              <small>
+                Horas estándar de trabajo por día (usado para calcular el pago por hora).
+                Ejemplo: 8 horas = jornada completa
+              </small>
             </div>
           </div>
 

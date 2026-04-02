@@ -329,3 +329,59 @@
     font-size: 1.1rem;
   }
 }
+
+/* Tablets - Optimización para orientación horizontal */
+@media (max-width: 1024px) and (min-width: 481px) {
+  .face-recognition {
+    max-width: 100%;
+    padding: 0 1rem;
+  }
+
+  .recognition-instructions {
+    padding: 1.25rem;
+  }
+
+  .recognition-instructions h3 {
+    font-size: 1.3rem;
+  }
+
+  .btn-capturar-asistencia {
+    max-width: 600px;
+    padding: 16px 35px;
+    font-size: 1.15rem;
+  }
+
+  .recognition-success {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .marca-info {
+    flex-direction: row;
+    gap: 2rem;
+  }
+}
+
+/* Móviles pequeños */
+@media (max-width: 480px) {
+  .face-recognition {
+    padding: 0 0.5rem;
+  }
+
+  .recognition-instructions {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .recognition-instructions h3 {
+    font-size: 1.1rem;
+  }
+
+  .recognition-instructions p {
+    font-size: 0.85rem;
+  }
+
+  .btn-capturar-asistencia {
+    padding: 14px 25px;
+    font-size: 1rem;
+  }
+}

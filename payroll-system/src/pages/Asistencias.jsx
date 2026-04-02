@@ -19,6 +19,8 @@ export const Asistencias = () => {
   const [filtroFecha, setFiltroFecha] = useState('todos')
   const [fechaInicio, setFechaInicio] = useState('')
   const [fechaFin, setFechaFin] = useState('')
+  const [empleadosExpandidos, setEmpleadosExpandidos] = useState({})
+  const [busquedaEmpleado, setBusquedaEmpleado] = useState('')
   const { config } = useEmpresaConfig()
 
   useEffect(() => {
@@ -186,7 +188,9 @@ export const Asistencias = () => {
     if (!asistencia.hora_salida) {
       return { texto: 'En curso', clase: 'en-curso' }
     }
-    if (asistencia.horas_trabajadas >= 10) {
+    // Usar horas_por_dia de configuración (por defecto 8)
+    const horasRequeridas = config?.horas_por_dia || 8
+    if (asistencia.horas_trabajadas >= horasRequeridas) {
       return { texto: 'Completo', clase: 'completo' }
     }
     return { texto: 'Incompleto', clase: 'incompleto' }
@@ -271,6 +275,50 @@ export const Asistencias = () => {
     }
   }
 
+  // Agrupar asistencias por empleado
+  const agruparPorEmpleado = () => {
+    const grupos = {}
+    asistencias.forEach(asistencia => {
+      const empleadoId = asistencia.empleado_id
+      if (!grupos[empleadoId]) {
+        grupos[empleadoId] = {
+          empleado: asistencia.empleados,
+          asistencias: [],
+          totalHoras: 0,
+          totalDias: 0
+        }
+      }
+      grupos[empleadoId].asistencias.push(asistencia)
+      if (asistencia.horas_trabajadas) {
+        grupos[empleadoId].totalHoras += parseFloat(asistencia.horas_trabajadas)
+      }
+      if (asistencia.hora_salida) {
+        grupos[empleadoId].totalDias += 1
+      }
+    })
+    
+    // Filtrar por búsqueda de nombre
+    let gruposArray = Object.values(grupos)
+    if (busquedaEmpleado.trim()) {
+      gruposArray = gruposArray.filter(grupo => 
+        grupo.empleado.nombre.toLowerCase().includes(busquedaEmpleado.toLowerCase()) ||
+        grupo.empleado.dni.includes(busquedaEmpleado)
+      )
+    }
+    
+    return gruposArray
+  }
+
+  // Manejar expansión/colapso de empleado
+  const toggleEmpleado = (empleadoId) => {
+    setEmpleadosExpandidos(prev => ({
+      ...prev,
+      [empleadoId]: !prev[empleadoId]
+    }))
+  }
+
+  const empleadosAgrupados = agruparPorEmpleado()
+
   return (
     <div className="asistencias-page">
       <div className="page-header">
@@ -310,6 +358,22 @@ export const Asistencias = () => {
           <div className="historial-tab">
             <div className="filtros-header">
               <div className="filtros">
+                <div className="filtro-group">
+                  <label>Buscar Empleado:</label>
+                  <input
+                    type="text"
+                    placeholder="Nombre o DNI..."
+                    value={busquedaEmpleado}
+                    onChange={(e) => setBusquedaEmpleado(e.target.value)}
+                    style={{
+                      padding: '0.5rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      fontSize: '0.95rem',
+                      minWidth: '200px'
+                    }}
+                  />
+                </div>
                 <div className="filtro-group">
                   <label>Período:</label>
                   <select
@@ -373,130 +437,170 @@ export const Asistencias = () => {
                   <table className="asistencias-table">
                     <thead>
                       <tr>
-                        <th>Fecha</th>
+                        <th style={{ width: '40px' }}></th>
                         <th>Empleado</th>
                         <th>DNI</th>
-                        <th>Entrada</th>
-                        <th>Salida</th>
-                        <th>Horas</th>
-                        <th>Estado</th>
+                        <th>Total Días</th>
+                        <th>Total Horas</th>
                         <th>Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {asistencias.map((asistencia) => {
-                        const estado = getEstadoAsistencia(asistencia)
-                        return (
-                          <tr key={asistencia.id}>
-                            <td>{formatDate(asistencia.fecha)}</td>
-                            <td>{asistencia.empleados.nombre}</td>
-                            <td>{asistencia.empleados.dni}</td>
-                            <td className="hora-entrada">
-                              {formatTime(asistencia.hora_entrada)}
-                              {getEstadoEntradaBadge(asistencia) && (
-                                <span className={`status-badge ${getEstadoEntradaBadge(asistencia).clase}`}>
-                                  {getEstadoEntradaBadge(asistencia).texto}
-                                </span>
-                              )}
-                            </td>
-                            <td className="hora-salida">
-                              {formatTime(asistencia.hora_salida)}
-                              {getEstadoSalidaBadge(asistencia) && (
-                                <span className={`status-badge ${getEstadoSalidaBadge(asistencia).clase}`}>
-                                  {getEstadoSalidaBadge(asistencia).texto}
-                                </span>
-                              )}
-                            </td>
+                      {empleadosAgrupados.map((grupo) => (
+                        <>
+                          <tr key={`empleado-${grupo.empleado.dni}`} className="empleado-row" onClick={() => toggleEmpleado(grupo.empleado.dni)}>
                             <td>
-                              {asistencia.horas_trabajadas
-                                ? `${parseFloat(asistencia.horas_trabajadas).toFixed(1)}h`
-                                : '-'}
-                            </td>
-                            <td>
-                              <span className={`estado-badge ${estado.clase}`}>
-                                {estado.texto}
-                              </span>
-                            </td>
-                            <td>
-                              <button
-                                onClick={() => handleDeleteAsistencia(asistencia.id, asistencia.empleados.nombre)}
-                                className="btn-delete-asistencia"
-                                title="Eliminar asistencia"
-                              >
-                                🗑️
+                              <button className="btn-toggle">
+                                {empleadosExpandidos[grupo.empleado.dni] ? '▼' : '▶'}
                               </button>
                             </td>
+                            <td><strong>{grupo.empleado.nombre}</strong></td>
+                            <td>{grupo.empleado.dni}</td>
+                            <td><strong>{grupo.totalDias}</strong></td>
+                            <td><strong>{grupo.totalHoras.toFixed(1)}h</strong></td>
+                            <td></td>
                           </tr>
-                        )
-                      })}
+                          {empleadosExpandidos[grupo.empleado.dni] && grupo.asistencias.map((asistencia) => {
+                            const estado = getEstadoAsistencia(asistencia)
+                            return (
+                              <tr key={asistencia.id} className="asistencia-detalle-row">
+                                <td></td>
+                                <td style={{ paddingLeft: '30px' }}>{formatDate(asistencia.fecha)}</td>
+                                <td></td>
+                                <td className="hora-entrada">
+                                  {formatTime(asistencia.hora_entrada)}
+                                  {getEstadoEntradaBadge(asistencia) && (
+                                    <span className={`status-badge ${getEstadoEntradaBadge(asistencia).clase}`}>
+                                      {getEstadoEntradaBadge(asistencia).texto}
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="hora-salida">
+                                  {formatTime(asistencia.hora_salida)}
+                                  {getEstadoSalidaBadge(asistencia) && (
+                                    <span className={`status-badge ${getEstadoSalidaBadge(asistencia).clase}`}>
+                                      {getEstadoSalidaBadge(asistencia).texto}
+                                    </span>
+                                  )}
+                                  <span style={{ marginLeft: '10px' }}>
+                                    {asistencia.horas_trabajadas
+                                      ? `${parseFloat(asistencia.horas_trabajadas).toFixed(1)}h`
+                                      : '-'}
+                                  </span>
+                                  <span className={`estado-badge ${estado.clase}`} style={{ marginLeft: '10px' }}>
+                                    {estado.texto}
+                                  </span>
+                                </td>
+                                <td>
+                                  <button
+                                    onClick={() => handleDeleteAsistencia(asistencia.id, asistencia.empleados.nombre)}
+                                    className="btn-delete-asistencia"
+                                    title="Eliminar asistencia"
+                                  >
+                                    🗑️
+                                  </button>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </>
+                      ))}
                     </tbody>
                   </table>
                 </div>
 
                 {/* Vista de tarjetas para móvil */}
                 <div className="asistencias-cards mobile-view">
-                  {asistencias.map((asistencia) => {
-                    const estado = getEstadoAsistencia(asistencia)
-                    return (
-                      <div key={asistencia.id} className="asistencia-card">
-                        <div className="card-header">
-                          <div>
-                            <h3>{asistencia.empleados.nombre}</h3>
-                            <p className="card-dni">DNI: {asistencia.empleados.dni}</p>
-                          </div>
-                          <span className={`estado-badge ${estado.clase}`}>
-                            {estado.texto}
-                          </span>
-                        </div>
-                        
-                        <div className="card-body">
-                          <div className="card-row">
-                            <span className="label">📅 Fecha:</span>
-                            <span className="value">{formatDate(asistencia.fecha)}</span>
-                          </div>
-                          <div className="card-row">
-                            <span className="label">🟢 Entrada:</span>
-                            <div className="value-with-badge">
-                              <span className="value hora-entrada">{formatTime(asistencia.hora_entrada)}</span>
-                              {getEstadoEntradaBadge(asistencia) && (
-                                <span className={`status-badge ${getEstadoEntradaBadge(asistencia).clase}`}>
-                                  {getEstadoEntradaBadge(asistencia).texto}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="card-row">
-                            <span className="label">🔴 Salida:</span>
-                            <div className="value-with-badge">
-                              <span className="value hora-salida">{formatTime(asistencia.hora_salida)}</span>
-                              {getEstadoSalidaBadge(asistencia) && (
-                                <span className={`status-badge ${getEstadoSalidaBadge(asistencia).clase}`}>
-                                  {getEstadoSalidaBadge(asistencia).texto}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="card-row">
-                            <span className="label">⏱️ Horas:</span>
-                            <span className="value">
-                              {asistencia.horas_trabajadas
-                                ? `${parseFloat(asistencia.horas_trabajadas).toFixed(1)}h`
-                                : '-'}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="card-actions">
-                          <button
-                            onClick={() => handleDeleteAsistencia(asistencia.id, asistencia.empleados.nombre)}
-                            className="btn-delete-card"
-                          >
-                            🗑️ Eliminar
+                  {empleadosAgrupados.map((grupo) => (
+                    <div key={`mobile-${grupo.empleado.dni}`} className="empleado-card-group">
+                      {/* Tarjeta principal del empleado */}
+                      <div 
+                        className="empleado-card-header"
+                        onClick={() => toggleEmpleado(grupo.empleado.dni)}
+                      >
+                        <div className="empleado-info">
+                          <button className="btn-toggle-mobile">
+                            {empleadosExpandidos[grupo.empleado.dni] ? '▼' : '▶'}
                           </button>
+                          <div>
+                            <h3>{grupo.empleado.nombre}</h3>
+                            <p className="card-dni">DNI: {grupo.empleado.dni}</p>
+                          </div>
+                        </div>
+                        <div className="empleado-stats">
+                          <div className="stat">
+                            <span className="stat-label">Días:</span>
+                            <span className="stat-value">{grupo.totalDias}</span>
+                          </div>
+                          <div className="stat">
+                            <span className="stat-label">Horas:</span>
+                            <span className="stat-value">{grupo.totalHoras.toFixed(1)}h</span>
+                          </div>
                         </div>
                       </div>
-                    )
-                  })}
+
+                      {/* Asistencias individuales (expandibles) */}
+                      {empleadosExpandidos[grupo.empleado.dni] && (
+                        <div className="asistencias-detalle-mobile">
+                          {grupo.asistencias.map((asistencia) => {
+                            const estado = getEstadoAsistencia(asistencia)
+                            return (
+                              <div key={asistencia.id} className="asistencia-card-detalle">
+                                <div className="card-header-detalle">
+                                  <span className="fecha-detalle">{formatDate(asistencia.fecha)}</span>
+                                  <span className={`estado-badge ${estado.clase}`}>
+                                    {estado.texto}
+                                  </span>
+                                </div>
+                                
+                                <div className="card-body">
+                                  <div className="card-row">
+                                    <span className="label">🟢 Entrada:</span>
+                                    <div className="value-with-badge">
+                                      <span className="value hora-entrada">{formatTime(asistencia.hora_entrada)}</span>
+                                      {getEstadoEntradaBadge(asistencia) && (
+                                        <span className={`status-badge ${getEstadoEntradaBadge(asistencia).clase}`}>
+                                          {getEstadoEntradaBadge(asistencia).texto}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="card-row">
+                                    <span className="label">🔴 Salida:</span>
+                                    <div className="value-with-badge">
+                                      <span className="value hora-salida">{formatTime(asistencia.hora_salida)}</span>
+                                      {getEstadoSalidaBadge(asistencia) && (
+                                        <span className={`status-badge ${getEstadoSalidaBadge(asistencia).clase}`}>
+                                          {getEstadoSalidaBadge(asistencia).texto}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="card-row">
+                                    <span className="label">⏱️ Horas:</span>
+                                    <span className="value">
+                                      {asistencia.horas_trabajadas
+                                        ? `${parseFloat(asistencia.horas_trabajadas).toFixed(1)}h`
+                                        : '-'}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="card-actions">
+                                  <button
+                                    onClick={() => handleDeleteAsistencia(asistencia.id, asistencia.empleados.nombre)}
+                                    className="btn-delete-card"
+                                  >
+                                    🗑️ Eliminar
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </>
             )}

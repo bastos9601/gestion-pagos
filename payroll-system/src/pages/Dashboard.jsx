@@ -305,6 +305,152 @@ export const Dashboard = () => {
         </div>
       </div>
 
+      {/* Sección de Instrucciones */}
+      <div className="instrucciones-section">
+        <h2>📚 Guía de Uso del Sistema</h2>
+        <p className="instrucciones-intro">
+          Bienvenido al sistema de gestión de planillas y asistencias. Aquí te explicamos cómo usar cada módulo:
+        </p>
+
+        <div className="instrucciones-grid">
+          {/* Configuración */}
+          <div className="instruccion-card">
+            <div className="instruccion-header">
+              <span className="instruccion-icon">⚙️</span>
+              <h3>1. Configuración Inicial</h3>
+            </div>
+            <div className="instruccion-body">
+              <p><strong>Antes de comenzar, configura:</strong></p>
+              <ul>
+                <li><strong>Datos de la empresa:</strong> Nombre, RUC, dirección</li>
+                <li><strong>Horario laboral:</strong> Hora de entrada, salida y tolerancia</li>
+                <li><strong>Horario de almuerzo:</strong> Inicio y duración</li>
+                <li><strong>Horas por día:</strong> Define cuántas horas tiene una jornada completa</li>
+                <li><strong>Firma digital:</strong> Crea tu firma para las boletas</li>
+              </ul>
+              <p className="instruccion-tip">💡 Estas configuraciones afectan el cálculo de pagos y asistencias</p>
+            </div>
+          </div>
+
+          {/* Empleados */}
+          <div className="instruccion-card">
+            <div className="instruccion-header">
+              <span className="instruccion-icon">👥</span>
+              <h3>2. Gestión de Empleados</h3>
+            </div>
+            <div className="instruccion-body">
+              <p><strong>Registra a tus empleados:</strong></p>
+              <ul>
+                <li>Agrega nombre completo, DNI y teléfono</li>
+                <li>Define el cargo y sueldo base mensual</li>
+                <li><strong>Importante:</strong> Registra la fecha de contratación</li>
+                <li>Puedes editar o eliminar empleados cuando sea necesario</li>
+              </ul>
+              <p className="instruccion-tip">💡 La fecha de contratación se usa para calcular períodos de pago de 30 días</p>
+            </div>
+          </div>
+
+          {/* Asistencias */}
+          <div className="instruccion-card">
+            <div className="instruccion-header">
+              <span className="instruccion-icon">📅</span>
+              <h3>3. Control de Asistencias</h3>
+            </div>
+            <div className="instruccion-body">
+              <p><strong>Sistema de reconocimiento facial:</strong></p>
+              <ul>
+                <li><strong>Registrar Rostros:</strong> Primero registra el rostro de cada empleado</li>
+                <li><strong>Marcar Asistencia:</strong> Los empleados marcan entrada y salida con su rostro</li>
+                <li><strong>Historial:</strong> Revisa asistencias por empleado, con días y horas trabajadas</li>
+                <li>El sistema detecta tardanzas y horas extras automáticamente</li>
+              </ul>
+              <p className="instruccion-tip">💡 Las horas se calculan descontando el tiempo de almuerzo configurado</p>
+            </div>
+          </div>
+
+          {/* Pagos */}
+          <div className="instruccion-card">
+            <div className="instruccion-header">
+              <span className="instruccion-icon">💰</span>
+              <h3>4. Registro de Pagos</h3>
+            </div>
+            <div className="instruccion-body">
+              <p><strong>Cómo registrar pagos:</strong></p>
+              <ul>
+                <li>Selecciona el empleado y tipo (Pago, Adelanto o Bono)</li>
+                <li>Elige la fecha del pago</li>
+                <li><strong>Usa "Desde Asistencias":</strong> Carga automáticamente días y horas del período de 30 días</li>
+                <li>El monto se calcula por horas trabajadas según configuración</li>
+                <li>Agrega descuentos o bonos adicionales si es necesario</li>
+                <li>Genera y descarga la boleta en PDF</li>
+              </ul>
+              <p className="instruccion-tip">💡 El sistema calcula períodos de 30 días desde la fecha de contratación</p>
+            </div>
+          </div>
+
+          {/* Cálculo de Pagos */}
+          <div className="instruccion-card">
+            <div className="instruccion-header">
+              <span className="instruccion-icon">🧮</span>
+              <h3>5. Cómo se Calculan los Pagos</h3>
+            </div>
+            <div className="instruccion-body">
+              <p><strong>Fórmula de cálculo:</strong></p>
+              <ul>
+                <li><strong>Pago por hora =</strong> Sueldo Base ÷ (30 días × Horas por día)</li>
+                <li><strong>Ejemplo:</strong> S/. 1,200 ÷ (30 × 9.5) = S/. 4.21 por hora</li>
+                <li><strong>Pago total =</strong> Horas trabajadas × Pago por hora</li>
+                <li>Se descuentan adelantos del mes automáticamente</li>
+                <li>Se suman bonos si los hay</li>
+              </ul>
+              <p className="instruccion-tip">💡 Ajusta las "Horas por día" en Configuración según tu jornada laboral</p>
+            </div>
+          </div>
+
+          {/* Historial */}
+          <div className="instruccion-card">
+            <div className="instruccion-header">
+              <span className="instruccion-icon">📊</span>
+              <h3>6. Historial y Reportes</h3>
+            </div>
+            <div className="instruccion-body">
+              <p><strong>Consulta y genera reportes:</strong></p>
+              <ul>
+                <li><strong>Historial de Pagos:</strong> Ve todos los pagos, adelantos y bonos registrados</li>
+                <li><strong>Historial de Asistencias:</strong> Busca por empleado y filtra por período</li>
+                <li>Los empleados están agrupados con totales de días y horas</li>
+                <li>Descarga reportes en PDF para respaldo</li>
+                <li>Envía boletas por WhatsApp directamente</li>
+              </ul>
+              <p className="instruccion-tip">💡 Usa los filtros para encontrar información específica rápidamente</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Consejos Adicionales */}
+        <div className="consejos-section">
+          <h3>💡 Consejos para un Mejor Uso</h3>
+          <div className="consejos-grid">
+            <div className="consejo-item">
+              <span className="consejo-icon">✅</span>
+              <p><strong>Configura primero:</strong> Completa toda la configuración antes de registrar empleados</p>
+            </div>
+            <div className="consejo-item">
+              <span className="consejo-icon">📸</span>
+              <p><strong>Buena iluminación:</strong> Registra rostros con buena luz para mejor reconocimiento</p>
+            </div>
+            <div className="consejo-item">
+              <span className="consejo-icon">🔄</span>
+              <p><strong>Revisa diariamente:</strong> Verifica las alertas de asistencia en el Dashboard</p>
+            </div>
+            <div className="consejo-item">
+              <span className="consejo-icon">💾</span>
+              <p><strong>Descarga respaldos:</strong> Genera PDFs de boletas y reportes regularmente</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>

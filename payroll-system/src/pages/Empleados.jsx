@@ -14,6 +14,7 @@ export const Empleados = () => {
     telefono: '',
     cargo: '',
     sueldo_base: '',
+    fecha_contratacion: new Date().toISOString().split('T')[0],
   })
 
   useEffect(() => {
@@ -75,6 +76,7 @@ export const Empleados = () => {
       telefono: empleado.telefono,
       cargo: empleado.cargo,
       sueldo_base: empleado.sueldo_base,
+      fecha_contratacion: empleado.fecha_contratacion || new Date().toISOString().split('T')[0],
     })
     setEditingId(empleado.id)
     setShowForm(true)
@@ -105,6 +107,7 @@ export const Empleados = () => {
       telefono: '',
       cargo: '',
       sueldo_base: '',
+      fecha_contratacion: new Date().toISOString().split('T')[0],
     })
     setEditingId(null)
     setShowForm(false)
@@ -173,6 +176,16 @@ export const Empleados = () => {
                 step="0.01"
                 value={formData.sueldo_base}
                 onChange={(e) => setFormData({ ...formData, sueldo_base: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Fecha de Contratación *</label>
+              <input
+                type="date"
+                value={formData.fecha_contratacion}
+                onChange={(e) => setFormData({ ...formData, fecha_contratacion: e.target.value })}
                 required
               />
             </div>

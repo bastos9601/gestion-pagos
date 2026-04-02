@@ -12,6 +12,7 @@ export const useEmpresaConfig = (publicMode = false) => {
     telefono: '',
     email: '',
     firma_url: '',
+    horas_por_dia: 8,
   })
   const [loading, setLoading] = useState(true)
 
@@ -45,6 +46,7 @@ export const useEmpresaConfig = (publicMode = false) => {
           telefono: data.telefono || '',
           email: data.email || '',
           firma_url: data.firma_url || '',
+          horas_por_dia: data.horas_por_dia || 8,
         })
       }
     } catch (error) {
@@ -74,6 +76,7 @@ export const useEmpresaConfig = (publicMode = false) => {
           telefono: data.telefono || '',
           email: data.email || '',
           firma_url: data.firma_url || '',
+          horas_por_dia: data.horas_por_dia || 8,
         })
       }
     } catch (error) {

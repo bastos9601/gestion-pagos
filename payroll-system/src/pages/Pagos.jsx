@@ -99,21 +99,52 @@ export const Pagos = () => {
     }
   }
 
-  // Función para calcular días y horas desde asistencias
+  // Función para calcular días y horas desde asistencias (períodos de 30 días)
   const calcularAsistenciasDelMes = async (empleadoId, fechaPago) => {
-    if (!empleadoId || !fechaPago) return { dias: 0, horas: 0 }
+    if (!empleadoId || !fechaPago) return { dias: 0, horas: 0, fechaInicio: null, fechaFin: null }
 
     try {
-      const fecha = new Date(fechaPago)
-      const primerDiaMes = new Date(fecha.getFullYear(), fecha.getMonth(), 1).toISOString().split('T')[0]
-      const ultimoDiaMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).toISOString().split('T')[0]
+      // Obtener la fecha de contratación del empleado
+      const { data: empleadoData, error: empleadoError } = await supabase
+        .from('empleados')
+        .select('fecha_contratacion')
+        .eq('id', empleadoId)
+        .single()
 
+      if (empleadoError) throw empleadoError
+
+      if (!empleadoData?.fecha_contratacion) {
+        alert('⚠️ Este empleado no tiene fecha de contratación registrada. Por favor edítalo y agrega la fecha.')
+        return { dias: 0, horas: 0, fechaInicio: null, fechaFin: null }
+      }
+
+      const fechaContratacion = new Date(empleadoData.fecha_contratacion)
+      const fechaPagoDate = new Date(fechaPago)
+      
+      // Calcular cuántos períodos de 30 días han pasado desde la contratación
+      const diasDesdeContratacion = Math.floor((fechaPagoDate - fechaContratacion) / (1000 * 60 * 60 * 24))
+      const numeroPeriodo = Math.floor(diasDesdeContratacion / 30)
+      
+      // Calcular el inicio y fin del período actual de 30 días
+      const fechaInicioPeriodo = new Date(fechaContratacion)
+      fechaInicioPeriodo.setDate(fechaInicioPeriodo.getDate() + (numeroPeriodo * 30))
+      
+      const fechaFinPeriodo = new Date(fechaInicioPeriodo)
+      fechaFinPeriodo.setDate(fechaFinPeriodo.getDate() + 29) // 30 días (0-29)
+      
+      // No buscar más allá de la fecha del pago
+      const fechaFin = fechaPagoDate < fechaFinPeriodo ? fechaPagoDate : fechaFinPeriodo
+      
+      const fechaInicioStr = fechaInicioPeriodo.toISOString().split('T')[0]
+      const fechaFinStr = fechaFin.toISOString().split('T')[0]
+
+      // Buscar asistencias en el período de 30 días
       const { data, error } = await supabase
         .from('asistencias')
         .select('fecha, hora_entrada, hora_salida, horas_trabajadas')
         .eq('empleado_id', empleadoId)
-        .gte('fecha', primerDiaMes)
-        .lte('fecha', ultimoDiaMes)
+        .gte('fecha', fechaInicioStr)
+        .lte('fecha', fechaFinStr)
         .not('hora_salida', 'is', null) // Solo contar asistencias completas
 
       if (error) throw error
@@ -121,22 +152,43 @@ export const Pagos = () => {
       const diasTrabajados = data?.length || 0
       const horasTrabajadas = data?.reduce((sum, a) => sum + (parseFloat(a.horas_trabajadas) || 0), 0) || 0
 
-      return { dias: diasTrabajados, horas: horasTrabajadas.toFixed(1) }
+      return { 
+        dias: diasTrabajados, 
+        horas: horasTrabajadas.toFixed(1),
+        fechaInicio: fechaInicioStr,
+        fechaFin: fechaFinStr
+      }
     } catch (error) {
       console.error('Error al calcular asistencias:', error)
-      return { dias: 0, horas: 0 }
+      return { dias: 0, horas: 0, fechaInicio: null, fechaFin: null }
     }
   }
 
-  // Función para calcular el monto según días trabajados
-  const calcularMonto = (empleadoId, dias, tipo, descuentos = 0, bonos = 0) => {
-    if (!empleadoId || !dias || tipo !== 'pago') return ''
+  // Función para calcular el monto según horas trabajadas
+  const calcularMonto = (empleadoId, dias, tipo, descuentos = 0, bonos = 0, horas = null) => {
+    if (!empleadoId || tipo !== 'pago') return ''
     
     const empleado = empleados.find(e => e.id === empleadoId)
     if (!empleado) return ''
     
-    // Calcular monto proporcional (asumiendo 30 días al mes)
-    const montoProporcional = (empleado.sueldo_base / 30) * parseFloat(dias)
+    // Obtener horas por día desde configuración (por defecto 8)
+    const horasPorDia = config?.horas_por_dia || 8
+    
+    // Calcular pago por hora: sueldo_base / (30 días × horas_por_dia) = pago por hora
+    const horasPorMes = 30 * horasPorDia
+    const pagoPorHora = empleado.sueldo_base / horasPorMes
+    
+    // Si se proporcionan horas, calcular por horas; si no, calcular por días
+    let montoProporcional
+    if (horas && parseFloat(horas) > 0) {
+      montoProporcional = pagoPorHora * parseFloat(horas)
+    } else if (dias && parseFloat(dias) > 0) {
+      // Fallback: calcular por días (usando horas_por_dia de configuración)
+      montoProporcional = pagoPorHora * parseFloat(dias) * horasPorDia
+    } else {
+      return ''
+    }
+    
     const montoConDescuentosYBonos = montoProporcional + parseFloat(bonos || 0) - parseFloat(descuentos || 0)
     return montoConDescuentosYBonos.toFixed(2)
   }
@@ -234,7 +286,8 @@ export const Pagos = () => {
       formData.dias_trabajados, 
       formData.tipo, 
       totalDescuentos,
-      totalBonos
+      totalBonos,
+      formData.horas_trabajadas
     )
     
     setFormData({
@@ -408,7 +461,7 @@ export const Pagos = () => {
                 }
                 
                 const descuentosTotal = parseFloat(formData.descuentos || 0) + adelantos
-                const monto = calcularMonto(empleadoId, formData.dias_trabajados, formData.tipo, descuentosTotal)
+                const monto = calcularMonto(empleadoId, formData.dias_trabajados, formData.tipo, descuentosTotal, 0, formData.horas_trabajadas)
                 
                 setFormData({ 
                   ...formData, 
@@ -450,7 +503,7 @@ export const Pagos = () => {
                   
                   const descuentosTotal = parseFloat(formData.descuentos || 0) + adelantos
                   const monto = tipo === 'pago' 
-                    ? calcularMonto(formData.empleado_id, formData.dias_trabajados, tipo, descuentosTotal)
+                    ? calcularMonto(formData.empleado_id, formData.dias_trabajados, tipo, descuentosTotal, 0, formData.horas_trabajadas)
                     : ''
                     
                   setFormData({ 
@@ -503,8 +556,9 @@ export const Pagos = () => {
                   value={formData.dias_trabajados}
                   onChange={(e) => {
                     const dias = e.target.value
-                    const horas = dias ? (parseFloat(dias) * 10).toFixed(2) : ''
-                    const monto = calcularMonto(formData.empleado_id, dias, formData.tipo, formData.descuentos)
+                    const horasPorDia = config?.horas_por_dia || 8
+                    const horas = dias ? (parseFloat(dias) * horasPorDia).toFixed(2) : ''
+                    const monto = calcularMonto(formData.empleado_id, dias, formData.tipo, formData.descuentos, 0, horas)
                     setFormData({ 
                       ...formData, 
                       dias_trabajados: dias,
@@ -521,20 +575,20 @@ export const Pagos = () => {
                     onClick={async () => {
                       const asistencias = await calcularAsistenciasDelMes(formData.empleado_id, formData.fecha)
                       if (asistencias.dias > 0) {
-                        const monto = calcularMonto(formData.empleado_id, asistencias.dias, formData.tipo, formData.descuentos)
+                        const monto = calcularMonto(formData.empleado_id, asistencias.dias, formData.tipo, formData.descuentos, 0, asistencias.horas)
                         setFormData({
                           ...formData,
                           dias_trabajados: asistencias.dias.toString(),
                           horas_trabajadas: asistencias.horas.toString(),
                           monto: monto || formData.monto
                         })
-                        alert(`✅ Datos cargados desde asistencias:\n${asistencias.dias} días trabajados\n${asistencias.horas} horas trabajadas`)
+                        alert(`✅ Datos cargados desde asistencias:\n\nPeríodo: ${asistencias.fechaInicio} al ${asistencias.fechaFin}\n${asistencias.dias} días trabajados\n${asistencias.horas} horas trabajadas\nMonto calculado: S/. ${monto}`)
                       } else {
-                        alert('⚠️ No hay asistencias registradas para este empleado en el mes seleccionado')
+                        alert('⚠️ No hay asistencias registradas para este empleado en el período de 30 días correspondiente')
                       }
                     }}
                     className="btn-sugerir-asistencias"
-                    title="Cargar días y horas desde asistencias"
+                    title="Cargar días y horas desde asistencias (períodos de 30 días)"
                   >
                     📅 Desde Asistencias
                   </button>
@@ -542,7 +596,7 @@ export const Pagos = () => {
               </div>
               {formData.tipo === 'pago' && formData.empleado_id && (
                 <small style={{ color: '#10b981', display: 'block', marginTop: '5px' }}>
-                  💡 Haz clic en "Desde Asistencias" para cargar automáticamente los días y horas trabajadas
+                  💡 Haz clic en "Desde Asistencias" para cargar automáticamente los días y horas (pago calculado por horas trabajadas)
                 </small>
               )}
             </div>
@@ -554,7 +608,15 @@ export const Pagos = () => {
                 step="0.5"
                 min="0"
                 value={formData.horas_trabajadas}
-                onChange={(e) => setFormData({ ...formData, horas_trabajadas: e.target.value })}
+                onChange={(e) => {
+                  const horas = e.target.value
+                  const monto = calcularMonto(formData.empleado_id, formData.dias_trabajados, formData.tipo, formData.descuentos, 0, horas)
+                  setFormData({ 
+                    ...formData, 
+                    horas_trabajadas: horas,
+                    monto: monto || formData.monto
+                  })
+                }}
                 placeholder="0.00"
               />
             </div>
