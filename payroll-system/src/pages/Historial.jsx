@@ -13,6 +13,7 @@ export const Historial = () => {
   const [empleados, setEmpleados] = useState([])
   const [loading, setLoading] = useState(true)
   const [previewPago, setPreviewPago] = useState(null)
+  const [empleadosExpandidos, setEmpleadosExpandidos] = useState({})
   const [filtros, setFiltros] = useState({
     empleado_id: '',
     tipo: '',
@@ -176,6 +177,54 @@ export const Historial = () => {
     }
   }
 
+  // Agrupar pagos por empleado
+  const agruparPorEmpleado = () => {
+    const grupos = {}
+    const mesActual = new Date().getMonth()
+    const añoActual = new Date().getFullYear()
+    
+    pagos.forEach(pago => {
+      const empleadoId = pago.empleado_id
+      if (!grupos[empleadoId]) {
+        grupos[empleadoId] = {
+          empleado: pago.empleados,
+          pagos: [],
+          totalPagado: 0,
+          totalAdelantos: 0,
+          totalBonos: 0,
+          cantidadPagos: 0
+        }
+      }
+      grupos[empleadoId].pagos.push(pago)
+      
+      // Verificar si el pago es del mes actual
+      const fechaPago = new Date(pago.fecha)
+      const esDelMesActual = fechaPago.getMonth() === mesActual && fechaPago.getFullYear() === añoActual
+      
+      if (pago.tipo === 'pago') {
+        grupos[empleadoId].totalPagado += pago.monto
+        grupos[empleadoId].cantidadPagos += 1
+      } else if (pago.tipo === 'adelanto' && esDelMesActual) {
+        // Solo sumar adelantos del mes actual
+        grupos[empleadoId].totalAdelantos += pago.monto
+      } else if (pago.tipo === 'bono' && esDelMesActual) {
+        // Solo sumar bonos del mes actual
+        grupos[empleadoId].totalBonos += pago.monto
+      }
+    })
+    return Object.values(grupos)
+  }
+
+  // Manejar expansión/colapso de empleado
+  const toggleEmpleado = (empleadoId) => {
+    setEmpleadosExpandidos(prev => ({
+      ...prev,
+      [empleadoId]: !prev[empleadoId]
+    }))
+  }
+
+  const empleadosAgrupados = agruparPorEmpleado()
+
   if (loading) return <div className="loading">Cargando...</div>
 
   return (
@@ -261,69 +310,85 @@ export const Historial = () => {
         <table className="historial-table desktop-view">
           <thead>
             <tr>
-              <th>Fecha</th>
+              <th style={{ width: '40px' }}></th>
               <th>Empleado</th>
               <th>Cargo</th>
-              <th>Tipo</th>
-              <th>Monto</th>
-              <th>Descripción</th>
+              <th>Total Pagos</th>
+              <th>Total Adelantos</th>
+              <th>Total Bonos</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {pagos.length === 0 ? (
+            {empleadosAgrupados.length === 0 ? (
               <tr>
                 <td colSpan="7" style={{ textAlign: 'center' }}>
                   No hay pagos registrados
                 </td>
               </tr>
             ) : (
-              pagos.map((pago) => (
-                <tr key={pago.id}>
-                  <td>{new Date(pago.fecha).toLocaleDateString()}</td>
-                  <td>{pago.empleados?.nombre || 'N/A'}</td>
-                  <td>{pago.empleados?.cargo || 'N/A'}</td>
-                  <td>
-                    <span className={`badge badge-${pago.tipo}`}>
-                      {pago.tipo}
-                    </span>
-                  </td>
-                  <td>S/. {pago.monto.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                  <td>{pago.descripcion || '-'}</td>
-                  <td>
-                    <div className="action-buttons">
-                      <button
-                        onClick={() => handleVerBoleta(pago)}
-                        className="btn-action btn-view"
-                        title="Ver boleta"
-                      >
-                        <Eye size={18} />
+              empleadosAgrupados.map((grupo) => (
+                <>
+                  <tr key={`empleado-${grupo.empleado.id}`} className="empleado-row" onClick={() => toggleEmpleado(grupo.empleado.id)}>
+                    <td>
+                      <button className="btn-toggle">
+                        {empleadosExpandidos[grupo.empleado.id] ? '▼' : '▶'}
                       </button>
-                      <button
-                        onClick={() => handleDescargarBoleta(pago)}
-                        className="btn-action btn-pdf"
-                        title="Descargar PDF"
-                      >
-                        <FileText size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleEnviarWhatsApp(pago)}
-                        className="btn-action btn-whatsapp"
-                        title="Enviar por WhatsApp"
-                        disabled={!pago.empleados?.telefono}
-                      >
-                        <MessageCircle size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleEliminarPago(pago)}
-                        className="btn-action btn-delete-pago"
-                        title="Eliminar"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                    </td>
+                    <td><strong>{grupo.empleado.nombre}</strong></td>
+                    <td>{grupo.empleado.cargo}</td>
+                    <td><strong>S/. {grupo.totalPagado.toLocaleString('es-PE', { minimumFractionDigits: 2 })}</strong> ({grupo.cantidadPagos})</td>
+                    <td><strong>S/. {grupo.totalAdelantos.toLocaleString('es-PE', { minimumFractionDigits: 2 })}</strong></td>
+                    <td><strong>S/. {grupo.totalBonos.toLocaleString('es-PE', { minimumFractionDigits: 2 })}</strong></td>
+                    <td></td>
+                  </tr>
+                  {empleadosExpandidos[grupo.empleado.id] && grupo.pagos.map((pago) => (
+                    <tr key={pago.id} className="pago-detalle-row">
+                      <td></td>
+                      <td style={{ paddingLeft: '30px' }}>{new Date(pago.fecha).toLocaleDateString('es-PE')}</td>
+                      <td>
+                        <span className={`badge badge-${pago.tipo}`}>
+                          {pago.tipo}
+                        </span>
+                      </td>
+                      <td>S/. {pago.monto.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      <td colSpan="2">{pago.descripcion || '-'}</td>
+                      <td>
+                        <div className="action-buttons">
+                          <button
+                            onClick={() => handleVerBoleta(pago)}
+                            className="btn-action btn-view"
+                            title="Ver boleta"
+                          >
+                            <Eye size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDescargarBoleta(pago)}
+                            className="btn-action btn-pdf"
+                            title="Descargar PDF"
+                          >
+                            <FileText size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleEnviarWhatsApp(pago)}
+                            className="btn-action btn-whatsapp"
+                            title="Enviar por WhatsApp"
+                            disabled={!pago.empleados?.telefono}
+                          >
+                            <MessageCircle size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleEliminarPago(pago)}
+                            className="btn-action btn-delete-pago"
+                            title="Eliminar"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </>
               ))
             )}
           </tbody>
@@ -331,69 +396,97 @@ export const Historial = () => {
 
         {/* Vista de tarjetas para móviles */}
         <div className="pagos-cards mobile-view">
-          {pagos.length === 0 ? (
+          {empleadosAgrupados.length === 0 ? (
             <div className="empty-state">No hay pagos registrados</div>
           ) : (
-            pagos.map((pago) => (
-              <div key={pago.id} className="pago-card">
-                <div className="pago-card-header">
-                  <div>
-                    <h3>{pago.empleados?.nombre || 'N/A'}</h3>
-                    <p className="cargo">{pago.empleados?.cargo || 'N/A'}</p>
-                  </div>
-                  <span className={`badge badge-${pago.tipo}`}>
-                    {pago.tipo}
-                  </span>
-                </div>
-                
-                <div className="pago-card-body">
-                  <div className="pago-info">
-                    <span className="label">Fecha:</span>
-                    <span className="value">{new Date(pago.fecha).toLocaleDateString('es-PE')}</span>
-                  </div>
-                  <div className="pago-info">
-                    <span className="label">Monto:</span>
-                    <span className="value monto">S/. {pago.monto.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                  </div>
-                  {pago.descripcion && (
-                    <div className="pago-info">
-                      <span className="label">Descripción:</span>
-                      <span className="value">{pago.descripcion}</span>
+            empleadosAgrupados.map((grupo) => (
+              <div key={`mobile-${grupo.empleado.id}`} className="empleado-card-group">
+                {/* Tarjeta principal del empleado */}
+                <div 
+                  className="empleado-card-header"
+                  onClick={() => toggleEmpleado(grupo.empleado.id)}
+                >
+                  <div className="empleado-info">
+                    <button className="btn-toggle-mobile">
+                      {empleadosExpandidos[grupo.empleado.id] ? '▼' : '▶'}
+                    </button>
+                    <div>
+                      <h3>{grupo.empleado.nombre}</h3>
+                      <p className="cargo">{grupo.empleado.cargo}</p>
                     </div>
-                  )}
+                  </div>
+                  <div className="empleado-stats">
+                    <div className="stat">
+                      <span className="stat-label">Pagos:</span>
+                      <span className="stat-value">S/. {grupo.totalPagado.toLocaleString('es-PE', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-label">Adelantos:</span>
+                      <span className="stat-value">S/. {grupo.totalAdelantos.toLocaleString('es-PE', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="pago-card-actions">
-                  <button
-                    onClick={() => handleVerBoleta(pago)}
-                    className="btn-action btn-view"
-                    title="Ver boleta"
-                  >
-                    <Eye size={18} />
-                  </button>
-                  <button
-                    onClick={() => handleDescargarBoleta(pago)}
-                    className="btn-action btn-pdf"
-                    title="Descargar PDF"
-                  >
-                    <FileText size={18} />
-                  </button>
-                  <button
-                    onClick={() => handleEnviarWhatsApp(pago)}
-                    className="btn-action btn-whatsapp"
-                    title="Enviar por WhatsApp"
-                    disabled={!pago.empleados?.telefono}
-                  >
-                    <MessageCircle size={18} />
-                  </button>
-                  <button
-                    onClick={() => handleEliminarPago(pago)}
-                    className="btn-action btn-delete-pago"
-                    title="Eliminar"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
+                {/* Pagos individuales (expandibles) */}
+                {empleadosExpandidos[grupo.empleado.id] && (
+                  <div className="pagos-detalle-mobile">
+                    {grupo.pagos.map((pago) => (
+                      <div key={pago.id} className="pago-card-detalle">
+                        <div className="pago-card-header">
+                          <span className="fecha-detalle">{new Date(pago.fecha).toLocaleDateString('es-PE')}</span>
+                          <span className={`badge badge-${pago.tipo}`}>
+                            {pago.tipo}
+                          </span>
+                        </div>
+                        
+                        <div className="pago-card-body">
+                          <div className="pago-info">
+                            <span className="label">Monto:</span>
+                            <span className="value monto">S/. {pago.monto.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          </div>
+                          {pago.descripcion && (
+                            <div className="pago-info">
+                              <span className="label">Descripción:</span>
+                              <span className="value">{pago.descripcion}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="pago-card-actions">
+                          <button
+                            onClick={() => handleVerBoleta(pago)}
+                            className="btn-action btn-view"
+                            title="Ver boleta"
+                          >
+                            <Eye size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDescargarBoleta(pago)}
+                            className="btn-action btn-pdf"
+                            title="Descargar PDF"
+                          >
+                            <FileText size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleEnviarWhatsApp(pago)}
+                            className="btn-action btn-whatsapp"
+                            title="Enviar por WhatsApp"
+                            disabled={!pago.empleados?.telefono}
+                          >
+                            <MessageCircle size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleEliminarPago(pago)}
+                            className="btn-action btn-delete-pago"
+                            title="Eliminar"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))
           )}

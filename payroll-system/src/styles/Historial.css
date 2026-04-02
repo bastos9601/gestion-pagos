@@ -338,3 +338,48 @@
     padding: 3px 8px;
   }
 }
+
+/* Estilos para filas agrupadas por empleado en historial */
+.empleado-row {
+  background-color: #f3f4f6;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.empleado-row:hover {
+  background-color: #e5e7eb;
+}
+
+.pago-detalle-row {
+  background-color: #ffffff;
+}
+
+.pago-detalle-row:hover {
+  background-color: #f9fafb;
+}
+
+/* Vista móvil agrupada para historial */
+.empleado-card-group {
+  margin-bottom: 1rem;
+}
+
+.pagos-detalle-mobile {
+  margin-top: 0.5rem;
+  padding-left: 0.5rem;
+}
+
+.pago-card-detalle {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.fecha-detalle {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.95rem;
+}
