@@ -232,7 +232,6 @@ export const AdminUsuarios = () => {
       setEditando(false)
     }
   }
-  }
 
   const handleEliminarUsuario = async (usuario) => {
     if (!confirm(`¿Estás seguro de eliminar al usuario ${usuario.email}? Esta acción no se puede deshacer.`)) return
