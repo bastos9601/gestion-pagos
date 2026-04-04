@@ -21,6 +21,9 @@ export const Asistencias = () => {
   const [fechaFin, setFechaFin] = useState('')
   const [empleadosExpandidos, setEmpleadosExpandidos] = useState({})
   const [busquedaEmpleado, setBusquedaEmpleado] = useState('')
+  const [showEmpleadoModal, setShowEmpleadoModal] = useState(false)
+  const [empleadoModal, setEmpleadoModal] = useState(null)
+  const [busquedaRegistro, setBusquedaRegistro] = useState('')
   const { config } = useEmpresaConfig()
 
   useEffect(() => {
@@ -623,23 +626,62 @@ export const Asistencias = () => {
                 <div className="registrar-header">
                   <h2>Selecciona un empleado para registrar su rostro</h2>
                   <p>El empleado debe capturar 3 fotos desde diferentes ángulos</p>
+                  
+                  {/* Buscador */}
+                  <div className="buscador-registro">
+                    <input
+                      type="text"
+                      placeholder="🔍 Buscar por nombre o DNI..."
+                      value={busquedaRegistro}
+                      onChange={(e) => setBusquedaRegistro(e.target.value)}
+                      className="input-buscar"
+                    />
+                  </div>
                 </div>
 
                 {loading ? (
                   <div className="loading">Cargando empleados...</div>
                 ) : (
                   <div className="empleados-grid">
-                    {empleados.map((empleado) => (
+                    {empleados
+                      .filter(empleado => 
+                        busquedaRegistro.trim() === '' ||
+                        empleado.nombre.toLowerCase().includes(busquedaRegistro.toLowerCase()) ||
+                        empleado.dni.includes(busquedaRegistro)
+                      )
+                      .map((empleado) => (
                       <div key={empleado.id} className="empleado-card">
-                        <div className="empleado-info">
-                          <h3>{empleado.nombre}</h3>
-                          <p>DNI: {empleado.dni}</p>
-                          {empleado.face_descriptors && (
-                            <span className="badge-registrado">✓ Registrado</span>
+                        <div 
+                          className="empleado-card-clickable"
+                          onClick={() => {
+                            setEmpleadoModal(empleado)
+                            setShowEmpleadoModal(true)
+                          }}
+                        >
+                          {empleado.foto_referencia ? (
+                            <div className="empleado-foto-circular">
+                              <img 
+                                src={empleado.foto_referencia} 
+                                alt={empleado.nombre}
+                                className="foto-circular"
+                              />
+                            </div>
+                          ) : (
+                            <div className="empleado-foto-circular sin-foto">
+                              <span className="icono-sin-foto">👤</span>
+                            </div>
                           )}
+                          <div className="empleado-info">
+                            <h3>{empleado.nombre}</h3>
+                            <p>DNI: {empleado.dni}</p>
+                            {empleado.face_descriptors && (
+                              <span className="badge-registrado">✓ Registrado</span>
+                            )}
+                          </div>
                         </div>
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation()
                             setSelectedEmpleado(empleado)
                             setShowRegistration(true)
                           }}
@@ -656,6 +698,72 @@ export const Asistencias = () => {
           </div>
         )}
       </div>
+
+      {/* Modal de información del empleado */}
+      {showEmpleadoModal && empleadoModal && (
+        <div className="modal-overlay" onClick={() => setShowEmpleadoModal(false)}>
+          <div className="modal-empleado" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="btn-close-modal"
+              onClick={() => setShowEmpleadoModal(false)}
+            >
+              ✕
+            </button>
+            
+            <div className="modal-empleado-content">
+              {empleadoModal.foto_referencia ? (
+                <div className="modal-foto-grande">
+                  <img 
+                    src={empleadoModal.foto_referencia} 
+                    alt={empleadoModal.nombre}
+                  />
+                </div>
+              ) : (
+                <div className="modal-foto-grande sin-foto">
+                  <span className="icono-grande">👤</span>
+                </div>
+              )}
+              
+              <div className="modal-empleado-info">
+                <h2>{empleadoModal.nombre}</h2>
+                
+                <div className="info-row">
+                  <span className="info-label">DNI:</span>
+                  <span className="info-value">{empleadoModal.dni}</span>
+                </div>
+                
+                {empleadoModal.telefono && (
+                  <div className="info-row">
+                    <span className="info-label">Teléfono:</span>
+                    <span className="info-value">{empleadoModal.telefono}</span>
+                  </div>
+                )}
+                
+                {empleadoModal.cargo && (
+                  <div className="info-row">
+                    <span className="info-label">Cargo:</span>
+                    <span className="info-value">{empleadoModal.cargo}</span>
+                  </div>
+                )}
+                
+                {empleadoModal.sueldo_base && (
+                  <div className="info-row">
+                    <span className="info-label">Sueldo Base:</span>
+                    <span className="info-value">S/. {empleadoModal.sueldo_base.toLocaleString('es-PE', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                )}
+                
+                <div className="info-row">
+                  <span className="info-label">Estado Facial:</span>
+                  <span className={`info-value ${empleadoModal.face_descriptors ? 'registrado' : 'no-registrado'}`}>
+                    {empleadoModal.face_descriptors ? '✓ Rostro Registrado' : '✗ Sin Registrar'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

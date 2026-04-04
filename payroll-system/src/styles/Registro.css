@@ -1,0 +1,367 @@
+/* Estilos para la página de Registro */
+
+.registro-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+}
+
+.registro-header {
+  text-align: center;
+  color: white;
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.btn-volver {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  backdrop-filter: blur(10px);
+}
+
+.btn-volver:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateX(-4px);
+}
+
+.registro-header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2.5rem;
+}
+
+.registro-header p {
+  margin: 0;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+/* Planes */
+.planes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto 3rem;
+}
+
+.plan-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  position: relative;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.plan-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.plan-card.destacado {
+  border: 3px solid #10b981;
+  transform: scale(1.05);
+}
+
+.plan-card.destacado:hover {
+  transform: scale(1.05) translateY(-8px);
+}
+
+.badge-popular {
+  position: absolute;
+  top: -15px;
+  right: 20px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+}
+
+.plan-header {
+  text-align: center;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #f3f4f6;
+  margin-bottom: 1.5rem;
+}
+
+.plan-header h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.75rem;
+  color: #1f2937;
+}
+
+.precio {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.precio .simbolo {
+  font-size: 1.5rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.precio .monto {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.precio .periodo {
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+.ahorro {
+  display: inline-block;
+  padding: 0.375rem 1rem;
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.caracteristicas {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+}
+
+.caracteristicas li {
+  padding: 0.875rem 0;
+  color: #4b5563;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.caracteristicas li:last-child {
+  border-bottom: none;
+}
+
+.caracteristicas .check {
+  color: #10b981;
+  font-weight: 700;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.btn-seleccionar {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-seleccionar:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+}
+
+.btn-seleccionar.destacado {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.btn-seleccionar.destacado:hover:not(:disabled) {
+  box-shadow: 0 8px 16px rgba(16, 185, 129, 0.4);
+}
+
+.btn-seleccionar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Info de pago */
+.info-pago {
+  max-width: 1200px;
+  margin: 0 auto 3rem;
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.info-pago h3 {
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+  color: #1f2937;
+  font-size: 1.5rem;
+}
+
+.metodos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.metodo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  transition: all 0.3s;
+}
+
+.metodo:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+}
+
+.metodo .icono {
+  font-size: 2rem;
+}
+
+.metodo span:last-child {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.garantias {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  padding-top: 2rem;
+  border-top: 2px solid #f3f4f6;
+}
+
+.garantia {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.garantia .icono {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.garantia strong {
+  display: block;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.garantia p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+/* FAQ */
+.faq-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.faq-section h3 {
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+  color: #1f2937;
+  font-size: 1.5rem;
+}
+
+.faq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.faq-item {
+  padding: 1.5rem;
+  background: #f9fafb;
+  border-radius: 10px;
+  border-left: 4px solid #667eea;
+}
+
+.faq-item strong {
+  display: block;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.faq-item p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .registro-container {
+    padding: 1rem;
+  }
+
+  .registro-header h1 {
+    font-size: 2rem;
+  }
+
+  .btn-volver {
+    position: static;
+    margin-bottom: 1rem;
+    width: 100%;
+  }
+
+  .planes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-card.destacado {
+    transform: scale(1);
+  }
+
+  .plan-card.destacado:hover {
+    transform: translateY(-8px);
+  }
+
+  .precio .monto {
+    font-size: 2.5rem;
+  }
+
+  .metodos-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .garantias {
+    grid-template-columns: 1fr;
+  }
+
+  .faq-grid {
+    grid-template-columns: 1fr;
+  }
+}

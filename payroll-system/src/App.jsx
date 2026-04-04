@@ -6,6 +6,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { Layout } from './components/Layout'
 import { AdminLayout } from './components/AdminLayout'
 import { Login } from './pages/Login'
+import { Registro } from './pages/Registro'
 import { Dashboard } from './pages/Dashboard'
 import { Empleados } from './pages/Empleados'
 import { Pagos } from './pages/Pagos'
@@ -28,6 +29,7 @@ function App() {
         <MantenimientoCheck>
           <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/registro" element={<Registro />} />
           <Route path="/pago-yape" element={<PagoYape />} />
           <Route path="/pago-pendiente" element={<PagoPendiente />} />
           <Route path="/admin/login" element={<AdminLogin />} />

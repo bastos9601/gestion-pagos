@@ -7,13 +7,20 @@ export const AdminUsuarios = () => {
   const [usuarios, setUsuarios] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingUsuario, setEditingUsuario] = useState(null)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     nombre_empresa: '',
     duracion_dias: 30
   })
+  const [editFormData, setEditFormData] = useState({
+    password: '',
+    monto: ''
+  })
   const [creando, setCreando] = useState(false)
+  const [editando, setEditando] = useState(false)
 
   useEffect(() => {
     loadUsuarios()
@@ -176,6 +183,78 @@ export const AdminUsuarios = () => {
     }
   }
 
+  const handleEditarUsuario = (usuario) => {
+    setEditingUsuario(usuario)
+    setEditFormData({
+      password: '',
+      monto: usuario.monto || ''
+    })
+    setShowEditModal(true)
+  }
+
+  const handleSubmitEdit = async (e) => {
+    e.preventDefault()
+    setEditando(true)
+
+    try {
+      // Actualizar contraseña si se proporcionó
+      if (editFormData.password && editFormData.password.trim() !== '') {
+        const { error: passwordError } = await supabase.auth.admin.updateUserById(
+          editingUsuario.user_id,
+          { password: editFormData.password }
+        )
+
+        if (passwordError) throw passwordError
+      }
+
+      // Actualizar monto en suscripción
+      if (editFormData.monto && editFormData.monto !== '') {
+        const { error: montoError } = await supabase
+          .from('suscripciones')
+          .update({ monto: parseFloat(editFormData.monto) })
+          .eq('user_id', editingUsuario.user_id)
+
+        if (montoError) throw montoError
+      }
+
+      alert('✅ Usuario actualizado exitosamente')
+      setShowEditModal(false)
+      setEditingUsuario(null)
+      setEditFormData({ password: '', monto: '' })
+      loadUsuarios()
+    } catch (err) {
+      console.error('Error al editar usuario:', err)
+      alert('❌ Error al editar usuario: ' + err.message)
+    } finally {
+      setEditando(false)
+    }
+  }
+
+  const handleEliminarUsuario = async (usuario) => {
+    if (!confirm(`¿Estás seguro de eliminar al usuario ${usuario.email}? Esta acción no se puede deshacer.`)) return
+
+    try {
+      // Primero eliminar la suscripción
+      const { error: subError } = await supabase
+        .from('suscripciones')
+        .delete()
+        .eq('user_id', usuario.user_id)
+
+      if (subError) throw subError
+
+      // Luego eliminar el usuario de auth
+      const { error: authError } = await supabase.auth.admin.deleteUser(usuario.user_id)
+
+      if (authError) throw authError
+
+      alert('✅ Usuario eliminado exitosamente')
+      loadUsuarios()
+    } catch (err) {
+      console.error('Error al eliminar usuario:', err)
+      alert('❌ Error al eliminar usuario: ' + err.message)
+    }
+  }
+
   const formatDate = (dateString) => {
     if (!dateString) return '-'
     return new Date(dateString + 'T00:00:00').toLocaleDateString('es-PE', {
@@ -282,6 +361,18 @@ export const AdminUsuarios = () => {
                       </button>
                     </>
                   )}
+                  <button
+                    onClick={() => handleEditarUsuario(usuario)}
+                    className="btn-editar"
+                  >
+                    ✏️ Editar
+                  </button>
+                  <button
+                    onClick={() => handleEliminarUsuario(usuario)}
+                    className="btn-eliminar"
+                  >
+                    🗑️ Eliminar
+                  </button>
                 </div>
               </div>
             )
@@ -370,6 +461,67 @@ export const AdminUsuarios = () => {
                   disabled={creando}
                 >
                   {creando ? 'Creando...' : 'Crear Usuario'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para editar usuario */}
+      {showEditModal && editingUsuario && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>✏️ Editar Usuario</h2>
+              <button onClick={() => setShowEditModal(false)} className="btn-close">✕</button>
+            </div>
+
+            <form onSubmit={handleSubmitEdit}>
+              <div className="info-box" style={{ marginBottom: '1.5rem' }}>
+                <span className="icono-info">👤</span>
+                <p><strong>Usuario:</strong> {editingUsuario.email}</p>
+              </div>
+
+              <div className="form-group">
+                <label>Nueva Contraseña</label>
+                <input
+                  type="text"
+                  value={editFormData.password}
+                  onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+                  minLength={6}
+                  placeholder="Dejar vacío para no cambiar"
+                />
+                <small>Mínimo 6 caracteres. Dejar vacío si no deseas cambiarla.</small>
+              </div>
+
+              <div className="form-group">
+                <label>Monto de Suscripción (S/)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={editFormData.monto}
+                  onChange={(e) => setEditFormData({ ...editFormData, monto: e.target.value })}
+                  placeholder="50.00"
+                />
+                <small>Monto actual: S/ {parseFloat(editingUsuario.monto).toFixed(2)}</small>
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="btn-cancelar-modal"
+                  disabled={editando}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn-crear-modal"
+                  disabled={editando}
+                >
+                  {editando ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
               </div>
             </form>

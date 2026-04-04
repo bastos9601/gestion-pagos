@@ -204,11 +204,25 @@ export const Login = () => {
 
         <div className="suscripcion-section">
           <p className="suscripcion-text">¿No tienes cuenta?</p>
+          
+          {/* Botón de pago automático - Oculto temporalmente
+          <button
+            onClick={() => navigate('/registro')}
+            className="suscribete-btn primary"
+          >
+            💳 Suscríbete Ahora (Pago Automático)
+          </button>
+          
+          <div className="divider">
+            <span>o</span>
+          </div>
+          */}
+          
           <a
             href={`https://wa.me/${whatsappNumero}?text=Hola,%20quiero%20suscribirme%20a%20GestiónPago`}
             target="_blank"
             rel="noopener noreferrer"
-            className="suscribete-btn"
+            className="suscribete-btn secondary"
           >
             💬 Suscríbete por WhatsApp
           </a>

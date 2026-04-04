@@ -148,10 +148,13 @@
   padding-top: 1.5rem;
   border-top: 2px solid #e5e7eb;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .suscripcion-text {
-  margin: 0 0 1rem 0;
+  margin: 0;
   color: #6b7280;
   font-size: 0.95rem;
 }
@@ -163,19 +166,55 @@
   gap: 8px;
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
   color: white;
   text-decoration: none;
+  border: none;
   border-radius: 8px;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 600;
   transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.suscribete-btn.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.suscribete-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.suscribete-btn.secondary {
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
   box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
 }
 
-.suscribete-btn:hover {
+.suscribete-btn.secondary:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 0.5rem 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.divider span {
+  padding: 0 1rem;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .toggle-text {

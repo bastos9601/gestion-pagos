@@ -177,8 +177,9 @@
 }
 
 .usuario-actions {
-  display: flex;
-  gap: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 2px solid #f3f4f6;
@@ -186,8 +187,9 @@
 
 .btn-extender,
 .btn-cancelar,
-.btn-activar {
-  flex: 1;
+.btn-activar,
+.btn-editar,
+.btn-eliminar {
   padding: 0.75rem;
   border: none;
   border-radius: 8px;
@@ -220,7 +222,7 @@
 .btn-activar {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  width: 100%;
+  grid-column: 1 / -1;
 }
 
 .btn-activar:hover {
@@ -228,8 +230,30 @@
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
+.btn-editar {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.btn-editar:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.btn-eliminar {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+}
+
+.btn-eliminar:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
 .btn-extender:disabled,
-.btn-cancelar:disabled {
+.btn-cancelar:disabled,
+.btn-editar:disabled,
+.btn-eliminar:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
