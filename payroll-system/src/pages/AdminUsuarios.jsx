@@ -197,24 +197,27 @@ export const AdminUsuarios = () => {
     setEditando(true)
 
     try {
-      // Actualizar contraseña si se proporcionó
-      if (editFormData.password && editFormData.password.trim() !== '') {
-        const { error: passwordError } = await supabase.auth.admin.updateUserById(
-          editingUsuario.user_id,
-          { password: editFormData.password }
-        )
+      // Validar que al menos uno de los campos tenga valor
+      const tienePassword = editFormData.password && editFormData.password.trim() !== ''
+      const tieneMonto = editFormData.monto && editFormData.monto !== ''
 
-        if (passwordError) throw passwordError
+      if (!tienePassword && !tieneMonto) {
+        alert('⚠️ Debes ingresar al menos un campo para actualizar')
+        setEditando(false)
+        return
       }
 
-      // Actualizar monto en suscripción
-      if (editFormData.monto && editFormData.monto !== '') {
-        const { error: montoError } = await supabase
-          .from('suscripciones')
-          .update({ monto: parseFloat(editFormData.monto) })
-          .eq('user_id', editingUsuario.user_id)
+      // Llamar a la función de Supabase para actualizar
+      const { data, error } = await supabase.rpc('actualizar_usuario_admin', {
+        p_user_id: editingUsuario.user_id,
+        p_nueva_password: tienePassword ? editFormData.password : null,
+        p_nuevo_monto: tieneMonto ? parseFloat(editFormData.monto) : null
+      })
 
-        if (montoError) throw montoError
+      if (error) throw error
+
+      if (!data.success) {
+        throw new Error(data.error || 'Error al actualizar usuario')
       }
 
       alert('✅ Usuario actualizado exitosamente')
@@ -229,23 +232,22 @@ export const AdminUsuarios = () => {
       setEditando(false)
     }
   }
+  }
 
   const handleEliminarUsuario = async (usuario) => {
     if (!confirm(`¿Estás seguro de eliminar al usuario ${usuario.email}? Esta acción no se puede deshacer.`)) return
 
     try {
-      // Primero eliminar la suscripción
-      const { error: subError } = await supabase
-        .from('suscripciones')
-        .delete()
-        .eq('user_id', usuario.user_id)
+      // Llamar a la función de Supabase para eliminar
+      const { data, error } = await supabase.rpc('eliminar_usuario_admin', {
+        p_user_id: usuario.user_id
+      })
 
-      if (subError) throw subError
+      if (error) throw error
 
-      // Luego eliminar el usuario de auth
-      const { error: authError } = await supabase.auth.admin.deleteUser(usuario.user_id)
-
-      if (authError) throw authError
+      if (!data.success) {
+        throw new Error(data.error || 'Error al eliminar usuario')
+      }
 
       alert('✅ Usuario eliminado exitosamente')
       loadUsuarios()
